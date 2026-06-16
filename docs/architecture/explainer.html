@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מדריך מערכת הסוכנים — Unplugged</title>
+<style>
+  :root{
+    --bg:#1e1e22; --bg2:#26262b; --bg3:#2f2f36; --line:#3a3a42;
+    --txt:#e8e8ea; --dim:#a0a0aa; --accent:#d97757; --accent2:#7aa2f7;
+    --green:#86c995; --red:#e06c75; --yellow:#e5c07b; --purple:#c678dd;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Segoe UI","Assistant","Heebo",Arial,sans-serif;
+    background:var(--bg); color:var(--txt); line-height:1.7;
+    display:flex; height:100vh; overflow:hidden;
+  }
+  /* Sidebar */
+  #sidebar{
+    width:320px; min-width:320px; background:var(--bg2);
+    border-left:1px solid var(--line); height:100vh; overflow-y:auto;
+    padding:18px 0;
+  }
+  #sidebar h1{
+    font-size:17px; padding:0 20px 4px; color:var(--txt);
+  }
+  #sidebar .sub{font-size:12px; color:var(--dim); padding:0 20px 16px; border-bottom:1px solid var(--line); margin-bottom:10px}
+  .group-title{
+    font-size:11px; font-weight:700; letter-spacing:.05em; color:var(--accent);
+    text-transform:uppercase; padding:14px 20px 6px;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:9px; padding:7px 20px; cursor:pointer;
+    font-size:14px; color:var(--dim); border-right:3px solid transparent;
+    transition:.12s;
+  }
+  .nav-item:hover{background:var(--bg3); color:var(--txt)}
+  .nav-item.active{background:var(--bg3); color:var(--txt); border-right-color:var(--accent)}
+  .nav-item .ico{font-size:15px; width:20px; text-align:center; flex-shrink:0}
+  .nav-item .tag{font-size:10px;color:var(--dim);margin-inline-start:auto}
+  /* Main */
+  #main{flex:1; height:100vh; overflow-y:auto; padding:48px 56px 120px}
+  .page{max-width:820px; margin:0 auto; display:none; animation:fade .25s ease}
+  .page.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .crumb{font-size:12px;color:var(--dim);margin-bottom:6px}
+  .page h2{font-size:30px;margin-bottom:6px;line-height:1.25}
+  .page .lead{font-size:17px;color:var(--dim);margin-bottom:26px;border-bottom:1px solid var(--line);padding-bottom:18px}
+  .page h3{font-size:20px;margin:28px 0 10px;color:var(--accent2)}
+  .page h4{font-size:15px;margin:20px 0 6px;color:var(--yellow)}
+  .page p{margin-bottom:13px}
+  .page ul,.page ol{margin:0 0 14px;padding-inline-start:24px}
+  .page li{margin-bottom:7px}
+  code{background:var(--bg3);padding:2px 6px;border-radius:5px;font-family:"Cascadia Code",Consolas,monospace;font-size:.88em;color:var(--accent);direction:ltr;display:inline-block}
+  .file-path{direction:ltr;text-align:left;background:#15151a;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-family:Consolas,monospace;font-size:12.5px;color:var(--green);margin-bottom:18px;overflow-x:auto;white-space:nowrap}
+  .box{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;margin:16px 0}
+  .box.why{border-inline-start:4px solid var(--accent)}
+  .box.det{border-inline-start:4px solid var(--green)}
+  .box.warn{border-inline-start:4px solid var(--yellow)}
+  .box.role{border-inline-start:4px solid var(--accent2)}
+  .box .bt{font-weight:700;font-size:13px;display:block;margin-bottom:6px;letter-spacing:.02em}
+  .box.why .bt{color:var(--accent)} .box.det .bt{color:var(--green)}
+  .box.warn .bt{color:var(--yellow)} .box.role .bt{color:var(--accent2)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:right;vertical-align:top}
+  th{background:var(--bg3);color:var(--txt);font-weight:700}
+  td:first-child{color:var(--accent2);font-weight:600}
+  .pill{display:inline-block;font-size:11px;padding:1px 9px;border-radius:20px;margin-inline-start:6px;vertical-align:middle}
+  .pill.exist{background:#1e3a2a;color:var(--green)}
+  .pill.build{background:#3a3320;color:var(--yellow)}
+  .pill.cut{background:#3a2226;color:var(--red)}
+  .pill.dec{background:#2a2440;color:var(--purple)}
+  .en{direction:ltr;text-align:left;background:#15151a;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:Consolas,monospace;font-size:12.5px;color:var(--dim);margin:12px 0;white-space:pre-wrap;line-height:1.5}
+  .en .c{color:var(--green)} .en .k{color:var(--accent2)}
+  a.xref{color:var(--accent2);cursor:pointer;text-decoration:none;border-bottom:1px dotted var(--accent2)}
+  a.xref:hover{color:var(--txt)}
+  .tip{font-size:13px;color:var(--dim);font-style:italic;margin-top:8px}
+  hr{border:none;border-top:1px solid var(--line);margin:24px 0}
+  .kbd{background:var(--bg3);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-family:monospace;font-size:.85em;direction:ltr;display:inline-block}
+  .miniflow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0;font-size:13px}
+  .miniflow .step{background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+  .miniflow .arr{color:var(--accent)}
+  .toc-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+  .toc-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:.12s}
+  .toc-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .toc-card .t{font-weight:700;color:var(--txt);margin-bottom:3px}
+  .toc-card .d{font-size:12.5px;color:var(--dim)}
+</style>
+</head>
+<body>
+<nav id="sidebar"></nav>
+<div id="main"></div>
+
+<script>
+/* ====== CONTENT ====== */
+const X = (id,label)=>`<a class="xref" data-go="${id}">${label}</a>`;
+
+const PAGES = [
+/* ---------- START ---------- */
+{id:"home",group:"התחלה",ico:"🏠",title:"ברוך הבא — מה המקום הזה",lead:"מדריך בעברית לכל מה שתכננּו: מערכת הסוכנים שתקבל משימות ותכתוב קוד לפי הסטנדרטים שלכם.",
+html:`
+<div class="box why"><span class="bt">בקצרה — מה עשינו בשיחה הזו</span>
+בנינו <b>תכנון מלא</b> (לא קוד עדיין) למערכת שבה סוכן AI מקבל טיקט מ־Jira, כותב קוד לפי החוקים של Unplugged, מריץ בדיקות, פותח Pull Request ומעדכן את Jira — <b>הכול רץ אך ורק על המחשב שלך</b>. התכנון מתועד ב־16 קבצים ב־Obsidian, והאתר הזה מסביר כל אחד מהם בעברית.</div>
+
+<h3>איך משתמשים באתר</h3>
+<p>בצד ימin יש עץ ניווט — בדיוק כמו ב־Obsidian. לוחצים על קובץ → מקבלים הסבר בעברית: מה הקובץ, מה התפקיד שלו, ולמה הוא חשוב כדי שהסוכן יהיה <b>דטרמיניסטי</b> (כלומר: יוציא כל פעם את אותו קוד צפוי, ולא ניחושים).</p>
+
+<p>מומלץ להתחיל לפי הסדר:</p>
+<div class="toc-cards">
+  <div class="toc-card" data-go="why"><div class="t">1 · למה בכלל ארכיטקטורה?</div><div class="d">הרעיון המרכזי — למה לא מספיק "פרומפט טוב"</div></div>
+  <div class="toc-card" data-go="layers"><div class="t">2 · 4 השכבות</div><div class="d">השיטה שמכריחה את ה־AI לעבוד מדויק</div></div>
+  <div class="toc-card" data-go="map"><div class="t">3 · מפת הקבצים</div><div class="d">איך 16 הקבצים מתחברים</div></div>
+  <div class="toc-card" data-go="changes"><div class="t">4 · מה שיניתי לבקשתך</div><div class="d">מקומי בלבד + הסרת עברית מהקבצים</div></div>
+</div>
+
+<div class="box det"><span class="bt">למה זה שווה את ההשקעה</span>
+היום, בלי המערכת הזו, כל משימה תלויה במזל: לפעמים הסוכן כותב יפה, לפעמים ממציא. ההשקעה בארכיטקטורה הופכת את זה ל<b>קו ייצור</b> — אותם חוקים, אותם שערי בדיקה, אותה תוצאה. זה ההבדל בין "כלי שמנחש" ל"מפתח זוטר שמכיר את הקוד".</div>
+`},
+
+{id:"why",group:"התחלה",ico:"💡",title:"למה בכלל ארכיטקטורה (ולא רק פרומפט טוב)",lead:"הרעיון המרכזי מהכנס: הפתרון הוא לא prompt חכם יותר — אלא מבנה שמכריח את ה־AI לעבוד דטרמיניסטית.",
+html:`
+<h3>הבעיה</h3>
+<p>כשנותנים ל־AI משימה עם הוראה כללית ("תוסיף כפתור"), הוא <b>מנחש</b> את כל מה שלא נאמר: איך נראית קומפוננטה אצלכם, איפה שמים types, איך קוראים ל־service. כל ניחוש כזה הוא מקום שהקוד יוצא שונה ממה שציפיתם. ככל שהפרויקט גדול יותר — יותר ניחושים, יותר סטיות.</p>
+
+<h3>הפתרון</h3>
+<p>במקום לקוות שהפרומפט יכסה הכול, <b>מצמצמים את מרחב הניחוש</b> דרך שכבות של הקשר וחוקים. ה־AI הופך מ"מנוע ניחושים יצירתי" ל"כלי הנדסי מדויק". זה בדיוק מה שמתואר בסיכום הכנס שלך.</p>
+
+<div class="box why"><span class="bt">המשפט שמסכם הכול</span>
+<b>דטרמיניזם לא מגיע מפרומפט גדול יותר — הוא מגיע מהקשר שכבתי + שערים שנבדקים אוטומטית.</b> פרומפט הוא בקשה מנומסת; שער בדיקה (כמו <code>tsc</code> שנכשל) הוא חוק שאי אפשר להתווכח איתו.</div>
+
+<h3>מה זה "דטרמיניסטי" בפועל?</h3>
+<p>שתי משימות זהות → אותו קוד (פחות או יותר). איך משיגים את זה:</p>
+<ul>
+  <li><b>הקשר</b> — הסוכן יודע מראש איך נראה הקוד שלכם (אילו routers קיימים, איך נראה ה־state), אז הוא לא ממציא.</li>
+  <li><b>שערים מכניים</b> — לפני שנפתח PR, סקריפט מריץ lint + טייפ-צ'ק + טסטים. אם משהו אדום, אין PR. הסוכן לא "שופט את עצמו".</li>
+  <li><b>ניתוב חוקים</b> — כשהסוכן נוגע בקובץ tRPC, החוקים של tRPC נטענים אוטומטית. הוא לא בוחר אילו כללים להחיל — המערכת בוחרת לפי הקובץ.</li>
+</ul>
+<p class="tip">ההסבר המלא של השיטה: ${X('layers','עבור ל־4 השכבות')}.</p>
+`},
+
+{id:"layers",group:"התחלה",ico:"🧱",title:"מתודולוגיית 4 השכבות",lead:"כל שכבה עונה על שאלה אחרת, ויושבת בקובץ אחר. ביחד הן עוטפות את ה־AI בהקשר עד שהוא לא יכול לטעות.",
+html:`
+<p>זה הלב של כל התכנון. כל שכבה היא רובד הקשר שמצמצם ניחוש:</p>
+<table>
+<tr><th>שכבה</th><th>על מה היא עונה</th><th>איפה היא גרה (קובץ)</th></tr>
+<tr><td>L1 · ראייה מערכתית</td><td>מה הפרויקט? איך הוא בנוי? מה העקרונות הגדולים?</td><td><code>admin/CLAUDE.md</code></td></tr>
+<tr><td>L2 · חוקים + ניתוב</td><td>קונבנציות קוד, טיפול בשגיאות, תבניות. ומפעיל את ה־skill הנכון למשימה.</td><td><code>.claude/rules/</code> + <code>.claude/skills/</code></td></tr>
+<tr><td>L3 · מבנה החבילות</td><td>איפה אני במונורפו? מה תלוי במה? מה שינוי כאן ישבור?</td><td><code>.claude/context/repo-map.md</code> (נוצר אוטומטית)</td></tr>
+<tr><td>L4 · הקשר מקומי</td><td>ה־APIs הפנימיים של החבילה הזו, צורת ה־state, תבניות מקומיות.</td><td><code>CLAUDE.md</code> מקונן בכל חבילה + <code>_inventory.md</code></td></tr>
+</table>
+
+<div class="miniflow">
+<span class="step">פרויקט (L1)</span><span class="arr">←</span>
+<span class="step">חוקים/skills (L2)</span><span class="arr">←</span>
+<span class="step">מבנה (L3)</span><span class="arr">←</span>
+<span class="step">הקשר מקומי (L4)</span><span class="arr">←</span>
+<span class="step" style="border-color:var(--green)">קוד מדויק</span>
+</div>
+
+<div class="box det"><span class="bt">למה זה הופך את זה לדטרמיניסטי</span>
+היום שכבות L3 ו־L4 <b>חסרות</b> — הסוכן מגלה את מבנה הקוד מחדש בכל ריצה (לאט, לא עקבי, ונוטה להזיות). כשנייצר אותן אוטומטית ונשמור בריפו, הסוכן <b>קורא</b> את המבנה במקום לנחש אותו. זה השינוי הכי גדול בין "מנחש" ל"יודע".</div>
+
+<h3>וגם — ecosystem של skills, לא פרומפט ענק</h3>
+<p>במקום פרומפט אחד גדול ומבולגן, יש הרבה skills קטנים, כל אחד למשימה הנדסית אחת: עיצוב tRPC, בניית קומפוננטה, ניהול state, טסטים. ה־L2 הוא ה"נתב" שמחליט איזה skill להפעיל. ההסבר על הניתוב: ${X('p06','קובץ 06 — Skill Routing')}.</p>
+`},
+
+{id:"map",group:"התחלה",ico:"🗺️",title:"מפת הקבצים — איך הכול מתחבר",lead:"16 קבצי תכנון + ה־canvas החזותי. ככה הם נחלקים.",
+html:`
+<p>כל הקבצים יושבים ב־<code>docs/agent-ecosystem/</code> בתוך ה־vault של ה־plugin. שלוש קבוצות:</p>
+
+<h3>📘 מסמכי התכנון (00–10)</h3>
+<table>
+<tr><th>קובץ</th><th>מה יש בו</th></tr>
+<tr><td>00 Home</td><td>מפת-על + לוח מצב. נקודת הכניסה.</td></tr>
+<tr><td>01 Vision</td><td>המטרה (ג'וניור אוטונומי) + שיטת 4 השכבות.</td></tr>
+<tr><td>02 Current State</td><td>מה קיים היום + ניתוח הפערים.</td></tr>
+<tr><td>03 Target Architecture</td><td>הצינור המלא: קליטה → ביצוע → סגירה.</td></tr>
+<tr><td>04 Agent Roster</td><td>כל סוכן/skill/סקריפט: תפקיד, טריגר, גבולות.</td></tr>
+<tr><td>05 Context Layers</td><td>איפה כל שכבה גרה כקובץ + ניתוח ה־gitignore.</td></tr>
+<tr><td>06 Skill Routing</td><td>ניתוב דטרמיניסטי + תוכנית איחוד כפילויות.</td></tr>
+<tr><td>07 Remote Execution</td><td>אוטומציה מקומית (בתחום) + מחקר remote (רפרנס).</td></tr>
+<tr><td>08 Security Model</td><td>קלט לא־מהימן, הגנות פלטפורמה.</td></tr>
+<tr><td>09 Roadmap</td><td>שלבים, סדר בנייה, שער היציאה (benchmark).</td></tr>
+<tr><td>10 Ecosystem Map</td><td>עם מי admin מדבר + מפת הריפואים בארגון.</td></tr>
+</table>
+
+<h3>🎯 ההחלטות (ADRs)</h3>
+<p>שש החלטות ארכיטקטוניות מתועדות — כל אחת מסבירה <b>למה</b> בחרנו כך ולא אחרת, כדי שלא נפתח ויכוח סגור מחדש. ${X('adr1','עבור ל־ADRs')}.</p>
+
+<h3>🖼️ Pipeline Map.canvas</h3>
+<p>תרשים חזותי ב־Obsidian Canvas — פותחים אותו ב־Obsidian ורואים את כל הצינור בתמונה אחת.</p>
+
+<div class="box role"><span class="bt">קהל היעד של הקבצים</span>
+הקבצים עצמם כתובים <b>באנגלית מקצה לקצה</b> (לבקשתך) — כי גם מודל AI עתידי צריך לקרוא ולבצע מהם. האתר הזה הוא השכבה העברית שמסבירה אותם <b>לך</b>.</div>
+`},
+
+/* ---------- DOC FILES ---------- */
+{id:"p00",group:"מסמכי התכנון",ico:"🏠",title:"00 Home — מפת-העל",lead:"נקודת הכניסה לכל התכנון. מי שנכנס (אתה או מודל) מתחיל כאן.",
+path:"docs/agent-ecosystem/00 Home.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+טבלת ניווט + לוח מצב (Status dashboard) שמראה לכל רכיב: קיים / לבנות / נחתך, רמת מאמץ, וקישור להסבר. זה ה־"Map of Content" שכל שאר הקבצים מסתעפים ממנו.</div>
+
+<h3>מה חשוב בו</h3>
+<ul>
+  <li><b>סדר קריאה</b> — 01 עד 10, מסומן במפורש, כך שמודל חדש יודע מאיפה להתחיל.</li>
+  <li><b>חוק הסמכות</b> — המסמכים הם אמת של <b>זמן-תכנון</b>. ברגע שמשהו נבנה, האמת עוברת לקבצים בריפו עצמו (<code>admin/.claude/**</code>). אם מסמך וקוד מתנגשים — <b>הקוד מנצח</b>.</li>
+  <li><b>לוח המצב</b> — תמונת מצב מהירה: כרגע רוב הרכיבים במצב "לבנות", והחוסם הראשון הוא A1 (לפתוח את ה־gitignore).</li>
+</ul>
+
+<div class="box det"><span class="bt">תרומה לדטרמיניזם</span>
+חוק הסמכות הוא עצמו מנגנון דטרמיניסטי: יש מקור-אמת אחד ברור לכל דבר. אין "גרסה במסמך וגרסה בקוד" שסותרות.</div>
+`},
+
+{id:"p01",group:"מסמכי התכנון",ico:"🎯",title:"01 Vision and Methodology",lead:"לאן אנחנו חותרים, ואיך שיטת 4 השכבות מתרגמת לכלים של Claude Code.",
+path:"docs/agent-ecosystem/01 Vision and Methodology.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+מגדיר את ה"כוכב הצפון" — <b>מפתח זוטר אוטונומי שרץ על המחשב שלך</b>: טיקט נכנס, קוד תקני יוצא, PR נפתח, Jira מתעדכן. ומגדיר 3 קריטריונים מדידים ל"הצלחה".</div>
+
+<h3>שלושת קריטריוני ההצלחה</h3>
+<ol>
+  <li><b>דטרמיניזם</b> — פרופיל Claude נקי (בלי plugins) שמכוון לריפו מוציא קוד תקני. נמדד ב־benchmark (${X('p09','קובץ 09')}).</li>
+  <li><b>אמון</b> — 22 מפתחים יכולים לסקור זרם של PRs מהסוכן בלי "לחתום בעיניים עצומות".</li>
+  <li><b>אפס עבודה ידנית חדשה</b> — היגיינת הטיקט שכבר עושים (estimate, QA, acceptance criteria) היא כל הקלט שהסוכן צריך.</li>
+</ol>
+
+<h3>טבלת 4 השכבות</h3>
+<p>הקובץ מכיל את הטבלה המלאה שמתרגמת כל שכבה לכלי קונקרטי של Claude Code (CLAUDE.md, rules, skills, context). זה הגשר בין "תיאוריה מהכנס" ל"קבצים אמיתיים בריפו".</p>
+
+<div class="box det"><span class="bt">תרומה לדטרמיניזם</span>
+5 עקרונות תכנון "סגורים" מוגדרים כאן (למשל: "הקשר + שערים מעל גודל פרומפט", "מיזוג אנושי הוא קבוע"). עיקרון = החלטה שלא חוזרים עליה כל פעם = פחות שונות.</div>
+`},
+
+{id:"p02",group:"מסמכי התכנון",ico:"📋",title:"02 Current State",lead:"תמונת מצב כנה: מה כבר עובד, ואיפה הפערים האמיתיים.",
+path:"docs/agent-ecosystem/02 Current State.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+מתעד את שלושת הנכסים הקיימים ומנתח את הפערים מול 4 השכבות. בלי זה, היינו מתכננים באוויר.</div>
+
+<h3>מה כבר יש לך</h3>
+<ul>
+  <li><b>uphub-skills</b> — 3 skills מקומיים: קליטת טיקט / סריקת ספרינט / פתיחת PR. כולם אינטראקטיביים, עם שערי אישור.</li>
+  <li><b>admin-development-assistant</b> (ה־plugin) — 21 skills + צוות 5 סוכנים + חיבורי Jira/GitHub/Figma.</li>
+  <li><b>ריפו admin</b> — מונורפו Nx, עם <code>CLAUDE.md</code> טוב.</li>
+</ul>
+
+<div class="box warn"><span class="bt">הממצא הקריטי</span>
+ה־<code>.gitignore</code> של admin <b>חוסם</b> את <code>.claude/</code> ואת <code>docs/</code>, וה־<code>CLAUDE.md</code> לא נמצא ב־git. כלומר: כל מכונה אחרת או פרופיל נקי שמשכפל את הריפו מקבל <b>אפס הקשר</b>. זה החוסם מספר 1.</div>
+
+<h3>הפערים מול 4 השכבות</h3>
+<p>L1 ו־L2 קיימים (אבל עם כפילויות), <b>L3 ו־L4 חסרים לגמרי</b>. אין שערים מכניים. אין נתב חוקים. הכול חי על מכונה אחת. כל אלה הם מה שהתכנון בא לפתור.</p>
+`},
+
+{id:"p03",group:"מסמכי התכנון",ico:"🏗️",title:"03 Target Architecture",lead:"הצינור המלא בשלושה שלבים — וההחלטות המבניות שמאחוריו.",
+path:"docs/agent-ecosystem/03 Target Architecture.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+מצייר את הצינור המלא: <b>קליטה → ביצוע → סגירה</b>, עם תרשים ASCII, וזרימת נתונים מלאה של טיקט בודד מהתחלה ועד הסוף.</div>
+
+<div class="miniflow">
+<span class="step">שלב 1 · קליטה</span><span class="arr">→</span>
+<span class="step">שלב 2 · ביצוע + 2 שערים</span><span class="arr">→</span>
+<span class="step">שלב 3 · Draft PR</span><span class="arr">→</span>
+<span class="step" style="border-color:var(--red)">👤 אדם מסקר וממזג</span>
+</div>
+
+<h3>ההחלטות המבניות</h3>
+<ul>
+  <li><b>מבצע יחיד</b>, לא צוות של 5. במונורפו שבו רוב השינויים נוגעים ב־<code>libs/admin-types</code>, סוכנים מקבילים מתנגשים. דטרמיניזם בא מהקשר + שערים, לא ממספר סוכנים.</li>
+  <li><b>שני שערים שונים</b>: שער A מכני (קודי-יציאה — אי אפשר להתווכח עם <code>tsc</code>), שער B מבקר ב<b>הקשר נקי</b> שרואה רק את ה־diff.</li>
+  <li><b>מצב סופי = Draft PR.</b> אף פעם לא merge. בן-אדם תמיד מסקר.</li>
+  <li><b>אינטראקטיבי ומתוזמן חולקים מוח אחד</b> — אותם קבצי הקשר, אותו סקריפט בדיקה.</li>
+</ul>
+
+<div class="box det"><span class="bt">תרומה לדטרמיניזם</span>
+שני השערים מבטיחים שתוצאה לא-תקנית פשוט <b>לא מגיעה ל־PR</b>. הסוכן לא מאשר את עצמו — סקריפט מאשר אותו. זה ההבדל מ"reviewer שקורא ומתרשם".</div>
+
+<h3>ספר המשחקים לכשלים</h3>
+<p>הקובץ כולל טבלה: CI אדום? טיקט לא ברור? שתי ריצות בו-זמנית? לכל אחד יש התנהגות מוגדרת מראש — לא אלתור.</p>
+`},
+
+{id:"p04",group:"מסמכי התכנון",ico:"🤖",title:"04 Agent Roster",lead:"הרשימה המלאה: מה נשאר, מה נבנה, מה נחתך. פחות סוכנים, יותר חדים.",
+path:"docs/agent-ecosystem/04 Agent Roster.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+המפרט המדויק של כל רכיב — תפקיד, טריגר, קלט/פלט, גבולות (guardrails). זה הקובץ שממנו בונים בפועל.</div>
+
+<h3>נשאר (הקונסולה האנושית) <span class="pill exist">קיים</span></h3>
+<p>3 ה־skills של uphub + task-intake + מצב הצוות (כאופציה מקומית לטיקטים גדולים).</p>
+
+<h3>נבנה — רק 2 הם "סוכנים" אמיתיים <span class="pill build">לבנות</span></h3>
+<table>
+<tr><th>רכיב</th><th>מה הוא</th></tr>
+<tr><td>context-harvester</td><td>סקריפט שמייצר את שכבות L3/L4 (מפת מונורפו + מלאי לכל חבילה). זה מה שעוצר את ה"גילוי מחדש בכל ריצה".</td></tr>
+<tr><td>compliance-validator</td><td><b>סקריפט, בכוונה לא סוכן.</b> השער המכני: lint, tsc, טסטים, regexes, גילוי השמטות. קוד-יציאה לא מתווכח.</td></tr>
+<tr><td>fresh-context review</td><td>שלב שמשתמש ב־<code>/code-review</code>+<code>/security-review</code> על ה־diff בלבד. המבקר הסקפטי היחיד.</td></tr>
+<tr><td>pr-feedback</td><td>skill מקומי: מושך הערות PR דרך <code>gh</code> ומתקן. מקסימום 3 סבבים.</td></tr>
+<tr><td>auto-triage</td><td>משימה מתוזמנת מקומית (Task Scheduler → <code>claude -p</code>) שסורקת טיקטים ומבצעת. רץ על המחשב שלך.</td></tr>
+</table>
+
+<h3>נחתך / הורד <span class="pill cut">נחתך</span></h3>
+<p>ה־Tester נבלע (טסטים = חלק מהמימוש), ה־Reviewer הורד לטובת 2 השערים, <code>admin-git</code> נמחק (כפילות), והצוות של 5 לא רץ אוטומטית. <b>וגם: ביצוע remote — מחוץ לתחום</b> (החלטתך, ${X('adr6','ADR-006')}).</p>
+
+<div class="box det"><span class="bt">תרומה לדטרמיניזם</span>
+"validator הוא סקריפט ולא סוכן" זו הבחירה הכי דטרמיניסטית בכל התכנון: סוכן ששופט עמידה בכללים = ניחוש; <code>exit code 1</code> = עובדה.</div>
+`},
+
+{id:"p05",group:"מסמכי התכנון",ico:"📚",title:"05 Context Layers",lead:"איפה בדיוק כל שכבה גרה כקובץ — והניתוח של חוסם ה־gitignore.",
+path:"docs/agent-ecosystem/05 Context Layers.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+טבלת המיקום: לכל אחת מ־4 השכבות, איזה קובץ, איפה, ומי כותב אותו (יד אנושית או נוצר אוטומטית). זו תוכנית ההנדסה של ההקשר.</div>
+
+<div class="box warn"><span class="bt">A1 — החוסם שצריך לפתוח קודם</span>
+צריך לשנות את ה־<code>.gitignore</code> של admin כדי לאפשר commit של <code>.claude/</code> ו־<code>CLAUDE.md</code>. <b>זו ההנחה הכי מסוכנת בתכנון</b> — דורשת אישור של זיו (ראש R&D). יש fallback מתועד אם הוא מסרב.</div>
+
+<h3>נקודה חשובה — פיצול ה־CLAUDE.md</h3>
+<p>ה־<code>CLAUDE.md</code> הנוכחי מערבב שני דברים: סקירה מערכתית יציבה (שצריכה להיכנס ל־git) + "Active Jira Tasks" שהוא מצב-סשן מקומי. צריך לפצל: היציב נכנס ל־git, המצב-המקומי עובר ל־<code>CLAUDE.local.md</code> (לא נכנס ל־git).</p>
+
+<h3>וגם — <code>.gitattributes</code></h3>
+<p>מכריח סיומות שורה אחידות (LF). בלי זה, מפתחי Windows שומרים CRLF, וה־benchmark/בדיקות מייצרים "diff רפאים" אינסופי.</p>
+
+<div class="box det"><span class="bt">תרומה לדטרמיניזם</span>
+זו השכבה שהופכת את הכול לדטרמיניסטי <b>בין מכונות</b>: ברגע שההקשר ב־git, פרופיל נקי, מכונת חבר צוות, וה־benchmark כולם קוראים בדיוק אותו דבר.</div>
+`},
+
+{id:"p06",group:"מסמכי התכנון",ico:"🧭",title:"06 Skill Routing",lead:"איך בוחרים את ה־skill הנכון — בלי ניחוש — ותוכנית מחיקת הכפילויות.",
+path:"docs/agent-ecosystem/06 Skill Routing.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+מגדיר את מנגנון הניתוב הדטרמיניסטי, ואת מפת מקור-האמת היחיד (לאן כל חוק שייך).</div>
+
+<h3>route-on-touch — הרעיון המנצח</h3>
+<p>הרעיון הראשון (לנתב לפי "רשימת קבצים מתוכננת") <b>נפסל</b> בביקורת: בשלב התכנון עוד אין skills טעונים, אז זה רק מזיז את הניחוש למעלה. במקום זה — hook מסוג <code>PreToolUse</code> מזהה את הקובץ ש<b>בפועל</b> עומדים לערוך, ומזריק את ה־skill המתאים <b>ברגע העריכה</b>:</p>
+<div class="en"><span class="k">apps/admin_backend/src/trpc/**</span>  →  admin-api-design
+<span class="k">apps/admin_client/src/components/**</span>  →  admin-components
+<span class="k">apps/admin_client/src/redux/**</span>  →  admin-state
+<span class="k">**/*.test.tsx</span>  →  admin-testing</div>
+<p>אי אפשר לערוך קובץ tRPC בלי שתבניות tRPC נכנסות להקשר. <b>אפס שיקול דעת.</b></p>
+
+<h3>3 מנגנונים בשכבות</h3>
+<ol>
+<li><b>route-on-touch</b> (hook) — הליבה הדטרמיניסטית.</li>
+<li><b>הקשר דק לתכנון</b> — צ'קליסט קבוע ("שינוי tRPC ⇒ תחשוב על router+controller+types+client") שמטפל בכשל ההשמטה.</li>
+<li><b>גלאי השמטות</b> (בתוך ה־validator) — בדיקה על ה־diff הסופי.</li>
+</ol>
+
+<h3>מקור-אמת יחיד</h3>
+<p>היום חוקי git מופיעים ב־3 מקומות, תחביר קומפוננטות ב־3 skills. הטבלה כאן קובעת לכל חוק <b>קובץ קנוני אחד</b>, וכל השאר הופך למצביע. מספר ה־skills יורד מ־21 ל־20 (מוחקים <code>admin-git</code>).</p>
+
+<div class="box det"><span class="bt">תרומה לדטרמיניזם</span>
+זה השם של המשחק: כשהבחירה איזה כלל להחיל נקבעת מכנית לפי נתיב הקובץ — ולא לפי "מה הסוכן חשב שמתאים" — קיבלת דטרמיניזם אמיתי בשכבת החוקים.</div>
+`},
+
+{id:"p07",group:"מסמכי התכנון",ico:"⚙️",title:"07 Remote Execution",lead:"החלטה: הכול מקומי. שאר הקובץ — מחקר remote ששמור כרפרנס בלבד.",
+path:"docs/agent-ecosystem/07 Remote Execution.md",
+html:`
+<div class="box warn"><span class="bt">ההחלטה שלך (ADR-006)</span>
+הסוכן רץ <b>אך ורק על המחשב שלך, בכל שלב</b>. אין GitHub Actions, אין cloud, אין סוכן ב־CI. כל החלק של remote בקובץ סומן מפורשות כ<b>"רפרנס בלבד — לא עבודה מתוכננת"</b>.</div>
+
+<h3>הנתיב שבתחום — אוטומציה מקומית</h3>
+<ul>
+  <li><b>טריגר</b>: Windows Task Scheduler מפעיל <code>claude -p</code> מקומית (או הרצה ידנית).</li>
+  <li><b>הרשאות</b>: הכול כבר על המכונה — <code>gh</code> ל־GitHub, Atlassian MCP ל־Jira. <b>לא נוצרות הרשאות חדשות בשום מקום.</b></li>
+  <li><b>הגבלה</b>: דגלי <code>--permission-mode</code> + <code>--allowedTools</code> מהדקים את הריצה; <code>--max-turns</code> מגביל עלות.</li>
+  <li><b>בו-זמניות</b>: קובץ-נעילה יחיד — ריצה אוטומטית אחת בכל פעם; סשן אינטראקטיבי קודם.</li>
+</ul>
+
+<div class="box det"><span class="bt">בונוס מההחלטה המקומית</span>
+ב־GitHub Actions ה־hooks <b>לא רצים</b> — מה שהיה מחליש את ה־route-on-touch. מקומי דווקא <b>מחזק</b> את התכנון: כל ה־hooks עובדים מקורית.</div>
+
+<h3>מה עדיין על GitHub בכל מקרה</h3>
+<p>הגנת branch על <code>main</code>/<code>v*</code> (חוסמת כל דוחף, כולל הסוכן) ו־Jenkins CI — שניהם חלים על ענפים שהסוכן יוצר בדיוק כמו על בני-אדם.</p>
+
+<p class="tip">הסיבה המלאה למה בחרנו מקומי: ${X('adr6','ADR-006')}.</p>
+`},
+
+{id:"p08",group:"מסמכי התכנון",ico:"🔒",title:"08 Security Model",lead:"טקסט של טיקט הוא קלט לא־מהימן שמניע סוכן עם הרשאות. כל הגנה חייבת להיות ברמת פלטפורמה.",
+path:"docs/agent-ecosystem/08 Security Model.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+מודל האיומים. הקו המנחה: <b>פרומפט הוא UX, פלטפורמה היא אבטחה.</b> "אל תדחוף ל־main" שמוגדר רק בפרומפט = fail-open. אותו fail-open שתיקנתם ב־UNP-8041.</div>
+
+<h3>תוספת ה"מקומי בלבד" (ADR-006)</h3>
+<p>ההחלטה המקומית <b>מסירה</b> את האיום של "דלת @claude ציבורית" ו<b>לא יוצרת</b> שום הרשאה חדשה. <b>אבל</b> — הסוכן המקומי רץ עם ההרשאות <b>המלאות</b> שלך (gh + Jira), רחב יותר מבוט CI מתוחם. לכן ההגנות הבאות נשארות חובה:</p>
+<ul>
+  <li><b>חילוץ spec</b> — הטיקט מומר ל"מפרט משימה" מובנה; הסוכן מקבל את המפרט, לא את הטקסט הגולמי. הוראות בטיקט שמבקשות קריאות רשת / סודות / שינויי CI — מסומנות, לא מבוצעות.</li>
+  <li><b>tripwire על ה־diff</b> — נגיעה בנתיבי אבטחה (webhook, WS, auth) בלי label <code>plan-approved</code> ⇒ חסימה קשה.</li>
+  <li><b>branch protection</b> — חוסם כל דוחף, מקומי כלול.</li>
+</ul>
+
+<div class="box det"><span class="bt">תרומה לדטרמיניזם (ולאמון)</span>
+ה־PR חושף הכול: תוצאות ה־validator, השמטות, סבבים. כך 22 הסוקרים יודעים מה המכונה בדקה — ולכן מה היא <b>לא</b> בדקה. אמון נבנה מחשיפה, לא מ"סמוך עליי".</div>
+`},
+
+{id:"p09",group:"מסמכי התכנון",ico:"🛣️",title:"09 Roadmap",lead:"שלושה שלבים, סדר בנייה, ושער היציאה שאי אפשר לרמות.",
+path:"docs/agent-ecosystem/09 Roadmap.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+תוכנית הבנייה בפועל: מה לאמת קודם, באיזה סדר לבנות, וכמה מאמץ (S/M/L) לכל משימה.</div>
+
+<h3>לאמת קודם (השבוע)</h3>
+<p><b>A1</b> (זיו מאשר commit של .claude/) — הסיכון הגבוה ביותר, הכול תלוי בו. וגם A2–A4 (הרצה מתוזמנת מקומית, Jenkins על ענפי PR, טוקן Jira).</p>
+
+<h3>שלב 1 — הקשחה מקומית</h3>
+<p>פתיחת gitignore → validator → איחוד כפילויות → route-on-touch → context-harvester → <b>benchmark</b>.</p>
+
+<div class="box det"><span class="bt">שער היציאה שאי אפשר לרמות</span>
+<b>Replay benchmark</b>: לוקחים 5–10 טיקטים היסטוריים עם PR ידוע, מריצים על פרופיל נקי 2–3 פעמים כל אחד, ומודדים מול ה־validator + rubric. <b>≥80% עוברים בלי תיקון אנושי</b> — אחרת אין שלב 2. זה הופך "אני חושב שזה דטרמיניסטי" ל"הוכחתי שזה דטרמיניסטי", וגם משמש כ־regression suite לכל שינוי עתידי.</div>
+
+<h3>שלב 2 — אוטומציה מקומית</h3>
+<p>branch protection + lock → pr-feedback → auto-triage (Task Scheduler) → לולאת CI → tripwires.</p>
+
+<h3>שערים אנושיים קבועים (לעולם לא אוטומטיים)</h3>
+<p>סקירה+merge של PR · label <code>plan-approved</code> לטיקטים מעל 4 שעות או נתיבי אבטחה · מעברי Jira אחרי "Waiting for CR" · מי מתייג <code>ai-ready</code>.</p>
+`},
+
+{id:"p10",group:"מסמכי התכנון",ico:"🌐",title:"10 Ecosystem Map",lead:"עם מי admin מדבר באמת, ואיזה ריפואים בארגון יכולים לקבל משימות.",
+path:"docs/agent-ecosystem/10 Ecosystem Map.md",
+html:`
+<div class="box role"><span class="bt">התפקיד</span>
+הקובץ שנולד מהשאלה שלך — "איך אני יודע שמשימת Java תעבוד?". ממפה כל אינטגרציה של admin (מאומת מהקוד) + את כל ~100 הריפואים בארגון לפי שפה.</div>
+
+<h3>עם מי admin מדבר (חלקי)</h3>
+<ul>
+  <li><b>שירות AAA</b> (<code>up_npm_aaa</code>) — בכל request.</li>
+  <li><b>up_vpn_admin</b> — <b>Java</b>.</li>
+  <li><b>up_apk_parser</b> — <b>Java</b>, צורך את ה־PARSER_QUEUE של admin.</li>
+  <li>up_draft_server (TS), Microsoft Graph, Redis, RabbitMQ, S3, webhook נכנס (HMAC).</li>
+</ul>
+
+<h3>התשובה לשאלת ה־Java</h3>
+<p>הארכיטקטורה <b>עיוורת לשפה</b>. הסוכנים לא משתנים — רק שלד הריפו והפקודות של ה־validator:</p>
+<table>
+<tr><th>שפה</th><th>validator מריץ</th></tr>
+<tr><td>TS/Node (Nx)</td><td><code>nx affected lint,test</code> + <code>tsc -b</code></td></tr>
+<tr><td>Kotlin</td><td><code>./gradlew ktlintCheck detekt test</code></td></tr>
+<tr><td>Java (Spring)</td><td><code>./gradlew check test</code></td></tr>
+<tr><td>Python</td><td><code>ruff check && pytest</code></td></tr>
+</table>
+
+<div class="box warn"><span class="bt">ה־guardrail שהשאלה שלך חשפה</span>
+ה־readiness checklist עכשיו דורש: <b>"האם הריפו של הטיקט עבר onboarding?"</b>. טיקט Java לריפו שעוד לא הוכן → תגובת <code>ai-needs-info</code> ("repo not onboarded"), במקום מימוש מבולבל. כרגע: אפס ריפואים onboarded — admin ראשון.</div>
+`},
+
+/* ---------- ADRs ---------- */
+{id:"adr1",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-001 — הריפו מעל ה־plugin",lead:"הקשר קריטי-לביצוע נכנס לריפו, לא נשאר ב־plugin על מכונה אחת.",
+path:"docs/agent-ecosystem/decisions/ADR-001 Repo Over Plugin.md",
+html:`
+<div class="box role"><span class="bt">ההחלטה</span>
+כל מה שקריטי לביצוע (4 השכבות, חוקים, skills, validator) עובר ל־<code>admin/.claude/**</code> ב־git. ה־plugin יורד לתפקיד "קונסולת מפעיל" (UX אינטראקטיבי, Figma, צלילים).</div>
+<h3>למה</h3>
+<p>פרופיל נקי, מכונת חבר-צוות, וה־benchmark — אף אחד מהם לא רואה plugin שמותקן על מכונה אחת. הם רואים <b>רק את הריפו</b>. אז האמת חייבת לחיות בריפו.</p>
+<div class="box det"><span class="bt">למה זה דטרמיניסטי</span>חוקים שעוברים code-review כמו קוד, ומסונכרנים דרך git, הם זהים בכל סביבה. זה הבסיס לכל שאר הדטרמיניזם.</div>
+<p class="tip">⚠️ דורש את A1 (פתיחת gitignore + אישור זיו). fallback מתועד ב־${X('p05','קובץ 05')}.</p>
+`},
+
+{id:"adr2",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-002 — ניתוב לפי נגיעה",lead:"בחירת skill קורית כשנוגעים בקובץ, לא לפי תכנון מראש.",
+path:"docs/agent-ecosystem/decisions/ADR-002 Route On Touch.md",
+html:`
+<div class="box role"><span class="bt">ההחלטה</span>
+3 מנגנונים: hook שמזריק skill לפי הקובץ הנערך + צ'קליסט דק לתכנון + גלאי השמטות ב־validator. תוויות טיקט אף פעם לא קובעות ניתוב.</div>
+<h3>למה (תוקן אחרי ביקורת עוינת)</h3>
+<p>ניתוב "לפי רשימת קבצים מתוכננת" עיוור ל<b>השמטות</b>: תכנון frontend-only למשימה fullstack ⇒ הסוכן משכפל type מקומית במקום להרחיב את <code>@admin-types</code> ⇒ הכול ירוק, אבל הקונבנציה הופרה. ניתוב לפי נגיעה בפועל סוגר את החור.</p>
+<div class="box det"><span class="bt">למה זה דטרמיניסטי</span>הבחירה איזה כלל להחיל נקבעת מכנית מנתיב הקובץ — אפס שיקול דעת של המודל בנקודה הזו.</div>
+`},
+
+{id:"adr3",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-003 — אוטונומיה עד Draft PR",lead:"מצב סופי תמיד Draft PR. אכיפה ברמת פלטפורמה.",
+path:"docs/agent-ecosystem/decisions/ADR-003 Draft PR Autonomy.md",
+html:`
+<div class="box role"><span class="bt">ההחלטה</span>
+המצב הסופי של הסוכן הוא תמיד <b>Draft PR + Jira → Waiting for CR</b>. אף פעם לא merge, לא דחיפה ל־main, לא מעבר Jira מעבר ל־CR. לכל חוק-פרומפט יש "תאום פלטפורמה" (branch protection, וכו').</div>
+<h3>למה</h3>
+<p>סוכן שמונע מטקסט-טיקט מחזיק הרשאות כתיבה. חוקי-פרומפט = הוראות לרכיב שתחת מתקפה = fail-open. ה־UNP-8041 שלכם (HMAC leak, WS fail-open) הוא בדיוק האזהרה.</p>
+<div class="box det"><span class="bt">למה זה בטוח</span>סוכן שנפרץ לגמרי יכול במקרה הגרוע לפתוח Draft PR רועש — גלוי, הפיך, לא ממוזג.</div>
+`},
+
+{id:"adr4",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-004 — מבצע יחיד + שערים",lead:"מבצע אחד + שערים מכניים. צוות 5 נשאר מקומי כאופציה.",
+path:"docs/agent-ecosystem/decisions/ADR-004 Single Agent Remote.md",
+html:`
+<div class="box role"><span class="bt">ההחלטה</span>
+בנתיב האוטונומי: מבצע <b>אחד</b> שכותב קוד+טסטים ביחד, ואז שער A (validator מכני) + שער B (מבקר בהקשר נקי על ה־diff בלבד). הצוות של 5 שורד מקומית כאופציה לטיקטים גדולים.</div>
+<h3>למה</h3>
+<p>הפיצ'ר הניסיוני של agent-teams לא קיים בריצות אוטומטיות; סוכנים מקבילים מתנגשים על <code>libs/admin-types</code>. אבל קריסה נאיבית לסוכן אחד מוחקת את המבקר הסקפטי — אז החזרנו אותו כשער B.</p>
+<div class="box det"><span class="bt">למה זה דטרמיניסטי</span>דטרמיניזם ממספר סוכנים = אשליה (יותר סוכנים = יותר שונות). דטרמיניזם מ־validator = ודאי.</div>
+`},
+
+{id:"adr5",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-005 — Polling במקום Dispatch",lead:"סקירת Jira מתוזמנת, לא PAT של GitHub שיושב בתוך Jira.",
+path:"docs/agent-ecosystem/decisions/ADR-005 Polling Over Dispatch.md",
+html:`
+<div class="box role"><span class="bt">ההחלטה</span>
+משימה מתוזמנת סורקת Jira (JQL) עם טוקן Jira; כתיבה ל־GitHub דרך הרשאות מקומיות. לא PAT של GitHub ששמור בתוך Jira Automation.</div>
+<h3>למה</h3>
+<p>PAT בתוך Jira = הרשאת כתיבה ל־GitHub ששמורה ב־Atlassian (גלויה ל־admins, קשורה לחשבון אישי, רדיוס-נזק רחב). polling הופך את זרימת ההרשאות לבטוחה.</p>
+<div class="box warn"><span class="bt">סטטוס — נדחה ע"י ADR-006</span>
+ה<b>טופולוגיה</b> של ה־polling שורדת (הסורק המקומי סורק את Jira אותו דבר). החלק של GitHub Actions רלוונטי רק אם remote ייבחן מחדש אי-פעם.</div>
+`},
+
+{id:"adr6",group:"ההחלטות (ADRs)",ico:"⭐",title:"ADR-006 — ביצוע מקומי בלבד",lead:"ההחלטה החדשה שלך: הסוכן רץ אך ורק על המחשב שלך, בכל שלב.",
+path:"docs/agent-ecosystem/decisions/ADR-006 Local Only Execution.md",
+html:`
+<div class="box role"><span class="bt">ההחלטה (שלך, 2026-06-11)</span>
+כל שלבי הצינור — קליטה, ביצוע, שערים, סגירה — רצים על המחשב שלך, בסשן אינטראקטיבי או בריצה מתוזמנת headless (<code>Task Scheduler → claude -p</code>). אין סוכני GitHub Actions, אין cloud, אין סוכן ב־CI.</div>
+<h3>השלכות</h3>
+<ul>
+  <li>✅ אפס הרשאות חדשות; משטח חיצוני מינימלי; תמיכה מלאה ב־hooks (route-on-touch עובד מקורית — Actions בכלל לא היה מריץ hooks).</li>
+  <li>✅ ההקשר בריפו (ADR-001) עדיין משתלם — פרופיל נקי וה־benchmark קוראים אותם חוקים, והתכנון נשאר תואם-עתיד אם remote ייבחן שוב.</li>
+  <li>⚠️ המכונה צריכה להיות דלוקה לריצות מתוזמנות; אחרת טיקטים מחכים. סביר לקצב של "ג'וניור".</li>
+  <li>⚠️ הסוכן פועל עם ההרשאות <b>המלאות</b> שלך — לכן הגנות ה־${X('p08','מודל האבטחה')} נשארות חובה.</li>
+  <li>⚠️ Bus factor 1 (מכונה אחת). סביר כרגע.</li>
+</ul>
+<div class="box det"><span class="bt">למה ההחלטה הזו טובה לדטרמיניזם</span>פחות משתנים נעים (אין סביבת CI שונה, אין הרשאות מרוחקות) = פחות מקומות שבהם התוצאה יכולה להשתנות. וה־hooks שעובדים מקורית הם הליבה של הניתוב הדטרמיניסטי.</div>
+`},
+
+/* ---------- HELP ---------- */
+{id:"changes",group:"עזר",ico:"✏️",title:"מה שיניתי בשיחה הזו",lead:"כל מה שעודכן לבקשתך, לפי הסדר.",
+html:`
+<h3>1 · החלטת "מקומי בלבד" הוטמעה בכל מקום</h3>
+<ul>
+  <li>נוצר <b>ADR-006</b> — תיעוד מלא של ההחלטה והשלכותיה.</li>
+  <li><b>04 Agent Roster</b>: "remote-triage" → <code>auto-triage</code> (משימה מתוזמנת מקומית); "pr-feedback-responder" → skill מקומי דרך <code>gh</code>. נוסף שורת "remote — מחוץ לתחום".</li>
+  <li><b>03 Target Architecture</b>: כל אזכור "remote" → "scheduled/local"; בו-זמניות דרך קובץ-נעילה במקום concurrency של Actions.</li>
+  <li><b>07 Remote Execution</b>: נוסף בראש סעיף "אוטומציה מקומית" (בתחום); כל מחקר ה־remote סומן "רפרנס בלבד".</li>
+  <li><b>08 Security</b>: נוספה תוספת "מקומי בלבד" — מסיר את דלת @claude, אבל הסוכן מחזיק הרשאות מלאות אז ההגנות נשארות.</li>
+  <li><b>09 Roadmap</b>: שלב 2 הפך מ"GitHub Actions" ל"אוטומציה מקומית"; A2 עודכן להרצה מתוזמנת מקומית.</li>
+  <li><b>00 / 01 / 05</b>: ניסוחים עודכנו ("autonomous junior on the owner's machine").</li>
+  <li><b>ADR-005</b>: סומן "נדחה ע"י ADR-006" (הטופולוגיה שורדת).</li>
+  <li><b>Pipeline Map.canvas</b>: צמתי הטריגר עודכנו (Task Scheduler מקומי, pr-feedback מקומי).</li>
+</ul>
+
+<h3>2 · כל העברית הוסרה מהקבצים</h3>
+<p>כל 16 הקבצים היו עם שורת <code>🇮🇱 TL;DR</code> בעברית. <b>כולן הומרו לאנגלית</b> — הקבצים עכשיו אנגלית מקצה לקצה, כי גם מודל עתידי צריך לבצע מהם.</p>
+
+<h3>3 · נבנה האתר הזה</h3>
+<p>קובץ HTML עצמאי אחד (בלי שרת) שמסביר הכול בעברית, בסגנון Obsidian.</p>
+
+<h3>קודם בשיחה — מיפוי האקו-סיסטם</h3>
+<p>נוסף <b>קובץ 10</b> + guardrail "repo onboarded" אחרי שהעלית את שאלת ה־Java.</p>
+`},
+
+{id:"cli",group:"עזר",ico:"⌨️",title:"מילון CLI — מונחים שמבלבלים",lead:"הסבר קצר בעברית למונחים שחוזרים. אם משהו ב־CLI לא ברור — חפש אותו כאן.",
+html:`
+<table>
+<tr><th>מונח</th><th>מה זה בעברית</th></tr>
+<tr><td>CLAUDE.md</td><td>קובץ הוראות שה־AI קורא אוטומטית כשנכנס לתיקייה. ה"הסבר לעובד החדש".</td></tr>
+<tr><td>skill</td><td>פקודה מודולרית למשימה אחת (כמו <code>/code-review</code>). מפעילים עם <code>/</code>.</td></tr>
+<tr><td>hook</td><td>קוד שרץ אוטומטית באירוע (למשל לפני כל עריכת קובץ). ה־route-on-touch הוא hook.</td></tr>
+<tr><td>plugin</td><td>חבילה של skills+hooks+הגדרות שמתקינים יחד. ה־admin-development-assistant הוא plugin.</td></tr>
+<tr><td>headless / <code>claude -p</code></td><td>הרצת Claude בלי ממשק אינטראקטיבי — פקודה אחת, תשובה אחת. מתאים לאוטומציה מתוזמנת.</td></tr>
+<tr><td>tRPC</td><td>הדרך שבה ה־frontend וה־backend אצלכם מדברים עם type-safety מלא, בלי codegen.</td></tr>
+<tr><td>monorepo / Nx</td><td>ריפו אחד עם כמה אפליקציות (admin_backend, admin_client) + ספריות משותפות. Nx מנהל אותו.</td></tr>
+<tr><td>PR (Pull Request)</td><td>בקשה למזג קוד. "Draft PR" = טיוטה שעדיין לא מוכנה ל־merge.</td></tr>
+<tr><td>validator</td><td>הסקריפט שמריץ lint+טסטים+טייפ-צ'ק. השער המכני שאי אפשר להתווכח איתו.</td></tr>
+<tr><td>readiness checklist</td><td>רשימת תנאים שטיקט חייב לעבור לפני שהסוכן מתחיל (AC, estimate, QA, repo onboarded).</td></tr>
+<tr><td>ADR</td><td>Architecture Decision Record — תיעוד החלטה אחת ולמה בחרנו בה.</td></tr>
+<tr><td>route-on-touch</td><td>ניתוב skill לפי הקובץ שנוגעים בו בפועל — לא לפי ניחוש מראש.</td></tr>
+<tr><td>gitignore surgery (A1)</td><td>השינוי שמאפשר ל־<code>.claude/</code> להיכנס ל־git. החוסם הראשון.</td></tr>
+</table>
+<div class="tip">טיפ ל־CLI: אם אתה צריך להריץ פקודה בעצמך בתוך הסשן, התחל אותה ב־<span class="kbd">! </span> (סימן קריאה) — הפלט יחזור ישר לשיחה.</div>
+`},
+
+{id:"next",group:"עזר",ico:"🚀",title:"הצעד הבא",lead:"איפה עצרנו ומה הדבר הבא לעשות.",
+html:`
+<div class="box why"><span class="bt">איפה אנחנו</span>
+התכנון מלא ומאומת (16 קבצים + ADRs + canvas + האתר הזה). ההחלטה "מקומי בלבד" מוטמעת. כל הקבצים באנגלית.</div>
+
+<h3>שלב 1 של ה־Roadmap — הצעד הראשון</h3>
+<p>לפי הכללים שלך עצמך (אסור עבודה בלי טיקט), הצעד הראשון הוא:</p>
+<ol>
+  <li><b>לפתוח טיקט UNP</b> לעבודה הזו (זו עבודה חדשה, מחוץ ל־UNP-8041 ו־UNP-8019). מריצים <code>/create-task-for-session-uphub</code>.</li>
+  <li><b>להכין את חבילת A1</b> — ה־diff המוצע ל־<code>.gitignore</code> + תצוגה מקדימה של פיצול ה־<code>CLAUDE.md</code> — כדי שתבוא לזיו "עם ה־diff ביד".</li>
+  <li><b>שיחת 15 דקות עם זיו</b> לאישור A1. הכול תלוי בזה.</li>
+</ol>
+
+<div class="box det"><span class="bt">למה דווקא הסדר הזה</span>
+A1 (פתיחת gitignore) הוא החוסם של <b>כל</b> השאר — בלי הקשר בריפו, אין דטרמיניזם בין-מכונתי ואין benchmark. לכן הוא ראשון, וכל היתר ממתין לו.</div>
+
+<p class="tip">כשתהיה מוכן — תגיד "בוא נכין את חבילת A1" ואבנה את ה־diff המדויק + פיצול ה־CLAUDE.md, מוכן להראות לזיו.</p>
+`},
+];
+
+/* ====== RENDER ====== */
+const groups=[...new Set(PAGES.map(p=>p.group))];
+const sb=document.getElementById('sidebar');
+const main=document.getElementById('main');
+sb.innerHTML=`<h1>🧩 מערכת הסוכנים</h1><div class="sub">מדריך עברית · Unplugged · תכנון 2026-06-11</div>`+
+  groups.map(g=>`<div class="group-title">${g}</div>`+
+    PAGES.filter(p=>p.group===g).map(p=>
+      `<div class="nav-item" data-id="${p.id}"><span class="ico">${p.ico}</span><span>${p.title}</span></div>`
+    ).join('')
+  ).join('');
+
+main.innerHTML=PAGES.map(p=>`
+  <article class="page" id="page-${p.id}">
+    <div class="crumb">${p.group}${p.path?' · קובץ':''}</div>
+    <h2>${p.ico} ${p.title}</h2>
+    <div class="lead">${p.lead}</div>
+    ${p.path?`<div class="file-path">📄 ${p.path}</div>`:''}
+    ${p.html}
+  </article>`).join('');
+
+function go(id){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  const pg=document.getElementById('page-'+id); if(!pg)return;
+  pg.classList.add('active');
+  const nv=document.querySelector('.nav-item[data-id="'+id+'"]'); if(nv)nv.classList.add('active');
+  main.scrollTop=0; history.replaceState(null,'','#'+id);
+}
+document.addEventListener('click',e=>{
+  const nav=e.target.closest('.nav-item'); if(nav){go(nav.dataset.id);return;}
+  const card=e.target.closest('[data-go]'); if(card){go(card.dataset.go);return;}
+});
+go(location.hash?location.hash.slice(1):'home');
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+	"nodes":[
+		{"id":"home0000000000001","type":"file","file":"docs/agent-ecosystem/00 Home.md","x":-460,"y":-40,"width":360,"height":120},
+		{"id":"jira0000000000001","type":"text","text":"## Jira (UNP)\nTicket + label `ai-ready`\nEstimate · AC · QA assignee","x":0,"y":-40,"width":280,"height":140,"color":"5"},
+		{"id":"intake00000000001","type":"text","text":"## STAGE 1 — Intake\n**Local:** /create-task-for-session-uphub · /task-intake\n**Remote:** remote-triage (readiness score → spec)\n→ branch UNP-NNNN · Jira → In Progress","x":360,"y":-60,"width":380,"height":180,"color":"4"},
+		{"id":"exec000000000001","type":"text","text":"## STAGE 2 — Execution\nSingle implementer\ncode + tests together\nskills via **route-on-touch**","x":820,"y":-60,"width":320,"height":180,"color":"4"},
+		{"id":"close00000000001","type":"text","text":"## STAGE 3 — Closing\n**DRAFT PR** + reviewers\nJira → Waiting for CR\nPR URL comment + @QA","x":1220,"y":-60,"width":320,"height":180,"color":"4"},
+		{"id":"human00000000001","type":"text","text":"## 👤 Humans (permanent gate)\nCode review → mark ready → **merge**\nZiv + Naama defaults","x":1620,"y":-40,"width":320,"height":140,"color":"1"},
+		{"id":"gatea00000000001","type":"text","text":"### Gate A — compliance-validator (script)\nlint · tsc -b · tests · regexes ·\nforbidden imports · omission detector ·\nsecret scan (diff + PR body)","x":760,"y":200,"width":380,"height":150,"color":"2"},
+		{"id":"gateb00000000001","type":"text","text":"### Gate B — fresh-context review\n/code-review + /security-review\non the **diff only**, clean context\nCRITICAL/HIGH unresolved ⇒ block","x":1180,"y":200,"width":380,"height":150,"color":"2"},
+		{"id":"poll000000000001","type":"text","text":"### ⏰ Scheduled local trigger (ADR-006)\nWindows Task Scheduler → headless claude -p\nJQL `ai-ready` · single-instance lock\nowner's machine only","x":360,"y":-320,"width":340,"height":150,"color":"6"},
+		{"id":"resp000000000001","type":"text","text":"### 💬 pr-feedback (local skill)\npulls PR comments via gh · fixup commits\nmax 3 rounds → `ai-blocked`","x":1220,"y":-320,"width":340,"height":130,"color":"6"},
+		{"id":"jenk000000000001","type":"text","text":"### 🔁 Jenkins CI loop\nclassify failure first:\ndeterministic → agent, max 2 rounds\nflake → retry once → `ai-blocked`","x":1620,"y":-320,"width":340,"height":150,"color":"6"},
+		{"id":"layers0000000001","type":"text","text":"## Context layers (committed to admin repo — ADR-001)\n**L1** `CLAUDE.md` system overview · **L2** `.claude/rules/` + `.claude/skills/` + router · **L3** `.claude/context/repo-map.md` (generated) · **L4** nested `CLAUDE.md` + `_inventory.md` per package (generated)","x":360,"y":440,"width":1180,"height":140,"color":"3"},
+		{"id":"harv000000000001","type":"text","text":"### context-harvester\nnx graph → L3 · exports/slices → L4\nstaleness = auto-fixup commit","x":0,"y":440,"width":320,"height":140,"color":"3"}
+	],
+	"edges":[
+		{"id":"e01","fromNode":"jira0000000000001","fromSide":"right","toNode":"intake00000000001","toSide":"left"},
+		{"id":"e02","fromNode":"intake00000000001","fromSide":"right","toNode":"exec000000000001","toSide":"left","label":"task spec (not raw prose)"},
+		{"id":"e03","fromNode":"exec000000000001","fromSide":"right","toNode":"close00000000001","toSide":"left"},
+		{"id":"e04","fromNode":"close00000000001","fromSide":"right","toNode":"human00000000001","toSide":"left","label":"draft PR"},
+		{"id":"e05","fromNode":"exec000000000001","fromSide":"bottom","toNode":"gatea00000000001","toSide":"top"},
+		{"id":"e06","fromNode":"gatea00000000001","fromSide":"right","toNode":"gateb00000000001","toSide":"left","label":"green"},
+		{"id":"e07","fromNode":"gateb00000000001","fromSide":"top","toNode":"close00000000001","toSide":"bottom","label":"approved"},
+		{"id":"e08","fromNode":"poll000000000001","fromSide":"bottom","toNode":"intake00000000001","toSide":"top","label":"remote trigger"},
+		{"id":"e09","fromNode":"resp000000000001","fromSide":"bottom","toNode":"close00000000001","toSide":"top","label":"review comments"},
+		{"id":"e10","fromNode":"jenk000000000001","fromSide":"bottom","toNode":"human00000000001","toSide":"top","label":"merge-readiness"},
+		{"id":"e11","fromNode":"layers0000000001","fromSide":"top","toNode":"exec000000000001","toSide":"bottom","label":"deterministic context"},
+		{"id":"e12","fromNode":"harv000000000001","fromSide":"right","toNode":"layers0000000001","toSide":"left","label":"generates L3/L4"},
+		{"id":"e13","fromNode":"home0000000000001","fromSide":"right","toNode":"jira0000000000001","toSide":"left"}
+	]
+}

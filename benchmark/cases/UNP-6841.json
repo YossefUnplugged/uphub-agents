@@ -1,0 +1,8 @@
+{
+  "key": "UNP-6841",
+  "groundTruthPr": 60,
+  "baseRef": "main",
+  "area": "backend+client (store)",
+  "prompt": "Fix the Store search: resolve the search loading state bug and the unsupported-toggle bug. (PROXY prompt from the PR title — before running, replace with the real Jira UNP-6841 description + acceptance criteria for an honest benchmark.)",
+  "_note": "Ground-truth files are fetched at runtime via `gh pr view 60 --json files`. This case exercises the store controller + client store components."
+}

@@ -1,0 +1,4 @@
+{
+  "_comment": "TEMPLATE. Copy to browser.json (gitignored) or let `scripts/setup.mjs` create it. Per-user: the Google account the agent uses in Chrome to reach internal IP-restricted tools.",
+  "internalAccessEmail": "you@gmail.com"
+}

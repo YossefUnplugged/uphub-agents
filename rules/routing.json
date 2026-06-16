@@ -1,0 +1,55 @@
+{
+  "_comment": "route-on-touch table. The PreToolUse hook matches the file being edited against these globs and injects `hint` as additionalContext (reference guidance, NOT imperative commands — see docs/SPIKE-0.1). `skills` names the skill(s) whose patterns apply; alwaysLoad applies to every edit.",
+
+  "alwaysLoad": ["admin-conventions"],
+
+  "routes": [
+    {
+      "glob": "apps/admin_backend/src/trpc/routes/**",
+      "skills": ["admin-routing", "admin-api-design"],
+      "hint": "tRPC ROUTE file. Keep it thin: validate input with a Zod schema, delegate the work to the matching controller in trpc/controllers/, and throw a typed TRPCError on failure. A new/changed procedure usually also needs a controller and a shared type in libs/admin-types. Patterns: admin-routing + admin-api-design."
+    },
+    {
+      "glob": "apps/admin_backend/src/trpc/controllers/**",
+      "skills": ["admin-api-design", "admin-services"],
+      "hint": "tRPC CONTROLLER file. Use the axiosRequest util + envConfig, extract the token, log via Winston (never console.log), and surface upstream failures as typed TRPCError. Patterns: admin-api-design + admin-services."
+    },
+    {
+      "glob": "apps/admin_backend/src/redis/**",
+      "skills": ["admin-caching"],
+      "hint": "Redis/cache file. Follow the key-naming + TTL + invalidation patterns; caching must be non-fatal (degrade gracefully). Patterns: admin-caching."
+    },
+    {
+      "glob": "apps/admin_backend/src/{rabbitMQ,utils,MicrosoftGraph}/**",
+      "skills": ["admin-services"],
+      "hint": "Backend service/util file. RabbitMQ is non-fatal at startup (check connection first). Centralize config via envConfig; log via Winston. Patterns: admin-services."
+    },
+    {
+      "glob": "apps/admin_client/src/components/**",
+      "skills": ["admin-components", "admin-errors"],
+      "hint": "React component (MUI + tss-react). Arrow function + inline destructured props + default export (see admin-conventions). Handle errors via the snackbar/error patterns. Patterns: admin-components + admin-errors."
+    },
+    {
+      "glob": "apps/admin_client/src/**/{forms,*Form}*/**",
+      "skills": ["admin-forms"],
+      "hint": "Form code. Use react-hook-form + Zod resolver, field-key enums, and the project's Controller field components. Patterns: admin-forms."
+    },
+    {
+      "glob": "apps/admin_client/src/redux/**",
+      "skills": ["admin-state"],
+      "hint": "Redux Toolkit state. Use createSlice, typed hooks, and (where relevant) redux-persist and tRPC invalidation. Hooks use named exports (see admin-conventions). Patterns: admin-state."
+    },
+    {
+      "glob": "libs/admin-types/**",
+      "skills": ["admin-api-design", "admin-components"],
+      "hint": "SHARED types — the FE/BE contract. Define the type here and re-export from libs/admin-types/src/index.ts; never duplicate a type locally in an app. Both sides consume it via @admin-types."
+    },
+    {
+      "glob": "**/*.{test,spec}.{ts,tsx}",
+      "skills": ["admin-testing"],
+      "hint": "Test file (vitest + RTL). Read the implementation first, then test behavior. Backend specs live as *.spec.ts under src/. Patterns: admin-testing."
+    }
+  ],
+
+  "_notes": "On an unmapped path the hook emits a `router-miss: <path>` marker that validate.mjs surfaces in the PR body — every miss is audited and grows the table."
+}

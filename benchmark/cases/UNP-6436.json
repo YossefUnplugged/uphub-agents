@@ -1,0 +1,8 @@
+{
+  "key": "UNP-6436",
+  "groundTruthPr": 56,
+  "baseRef": "main",
+  "area": "backend+types+client",
+  "prompt": "Add `isUnsupportedOnly` backend filtering for the store app list, and update the toggle color in the client. (PROXY prompt from the PR title — replace with the real Jira UNP-6436 AC before a real benchmark run.)",
+  "_note": "Good shared-types case: a new filter flag likely crosses libs/admin-types → tests criterion #3 (shared-types respected)."
+}

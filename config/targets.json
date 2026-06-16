@@ -1,0 +1,46 @@
+{
+  "_comment": "Every repo the agent can work on. The agent roster never changes per target — only these commands and conventions do. This realizes the language-agnostic envelope: add a Kotlin/Java target by adding an entry with its own check commands. ${base} is substituted with the --base git ref (default origin/main).",
+
+  "targets": {
+    "admin": {
+      "displayName": "admin (Nx monorepo)",
+      "path": "C:/Users/YossefBenHaim/Desktop/admin",
+      "languages": ["typescript"],
+      "onboarded": true,
+      "jira": {
+        "_comment": "Required UNP fields for any ticket this system creates. App Name is REQUIRED by the UNP project — set per target/teammate at onboarding (see standards/jira.md for the full option list).",
+        "appName": { "fieldId": "customfield_10424", "id": "10469", "label": "Admin client" },
+        "sprintFieldId": "customfield_10020"
+      },
+      "_conventions_note": "Aligned to the team's ACTUAL practice (verified from git log): conventional-commit subject with the UNP id in trailing parens, e.g. `fix(security): harden webhook (UNP-8041)`. The ada plugin's `Refs: UNP-NNNN` trailer was aspirational and never used — the validator caught the drift on its first run.",
+      "conventions": {
+        "branchPattern": "^UNP-\\d+$",
+        "commitSubjectPattern": "^(feat|fix|test|docs|chore|refactor|perf|style|build|ci)\\([\\w-]+\\): .+",
+        "commitTicketPattern": "UNP-\\d+"
+      },
+      "checks": {
+        "lint": "npx nx affected -t lint --base=${base}",
+        "typecheck": "npx nx run admin_backend:typecheck:remote && npx tsc -b ./apps/admin_client/tsconfig.json && npx nx run admin-types:typecheck:remote",
+        "test": "npx nx affected -t test --base=${base} --passWithNoTests"
+      },
+      "forbiddenImports": [
+        {
+          "name": "client-imports-backend-runtime",
+          "inPath": "apps/admin_client/src",
+          "filePattern": "\\.(ts|tsx)$",
+          "matchPattern": "(import|require)\\s*[^;\\n]*['\"]@admin-backend['\"]",
+          "allowIfLineMatches": "import\\s+type|import\\s*\\{\\s*type\\s",
+          "message": "admin_client must not import backend runtime — only the AppRouter TYPE via `import type` from @admin-backend is allowed."
+        }
+      ],
+      "omissionRules": [
+        {
+          "name": "trpc-route-without-controller-or-types",
+          "ifTouched": "apps/admin_backend/src/trpc/routes/",
+          "expectAlsoTouched": ["apps/admin_backend/src/trpc/controllers/", "libs/admin-types/"],
+          "message": "A tRPC route changed but no controller or shared-type change — verify the contract isn't half-wired."
+        }
+      ]
+    }
+  }
+}
