@@ -20,6 +20,13 @@ tRPC API patterns for the Admin Nx monorepo backend.
 - Handling errors properly
 - Making external HTTP calls
 
+## CRITICAL — `@admin-types` is COMPILE-TIME ONLY in the backend
+`@admin-types` is a tsconfig path alias pointing at the TypeScript SOURCE (`libs/admin-types/src`); it resolves only at compile time. In backend code **import TYPES only — never a runtime VALUE**:
+- ✅ `import { App, Region } from "@admin-types";` used as type annotations → tsc elides it, no runtime `require`.
+- ❌ `import { SomeEnum } from "@admin-types"; ... z.nativeEnum(SomeEnum)` → emits `require("@admin-types")` → **CrashLoopBackOff: `Cannot find module '@admin-types'`** at runtime.
+- Need a runtime enum in a Zod schema? Use `z.string()` (forward to the upstream service) or `z.enum([...local string literals...])`. Do NOT pull the enum object from `@admin-types`.
+- (Frontend is fine — Vite bundles `@admin-types`. This rule is backend-only.)
+
 ## Technology Stack
 
 - **tRPC 10.45.2** for type-safe APIs
