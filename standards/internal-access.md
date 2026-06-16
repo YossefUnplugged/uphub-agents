@@ -20,6 +20,9 @@ When you need an external API's shape (e.g. the coupons `promotion-code-admin-co
    - **Account check FIRST (mandatory).** Before fetching anything, determine which Google account Chrome is using and **show it to the user**. It MUST match `config/browser.json` → `internalAccessEmail`. If it does NOT match (wrong account logged in — a common case), STOP, tell the user *"Chrome is currently signed in as `<X>`, but internal access needs `<configured email>` — please switch accounts (or confirm)"*, and wait. Never pull internal data on the wrong account.
 3. **If the browser tool is unavailable** (not connected/loaded) **or the resource is still unreachable → STOP and request access from the manager/human.** Post a precise request — the exact URL/resource, what's blocked (403/IP), and why it's needed — via the needs-info draft and an `ai-needs-info` Jira comment to the reporter. Do not proceed.
 
+## Never invent integration config names
+Env var names, service-URL keys, and config identifiers are NOT yours to guess. Confirm the real name from the service repo, the target's existing config (`envConfig.ts` / `.env.example`), or the team — then reuse it. (Example caught in review: the coupons base URL was invented as `PRODUCT_SERVICE_URL`; the real one is `COUPON_PROXY_SERVICE_URL`.) An invented env var silently yields `undefined` at runtime — a production failure, not a compile error.
+
 ## Hard rule
 **Never invent an API contract, field, or endpoint to get unblocked.** If you cannot read the real contract via (1) or (2), escalate via (3). Mirroring the real contract is mandatory — the same "do not invent fields" rule the tickets carry.
 
