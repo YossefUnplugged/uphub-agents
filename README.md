@@ -1,8 +1,8 @@
 # uphub-agents
 
-**A control layer that turns a probabilistic LLM into a reliable junior developer for Unplugged.**
+**A control layer that takes a probabilistic model and makes it behave *more* deterministically — by shrinking what it can access and what it knows to exactly our needs.**
 
-The model in the middle is non-deterministic — same prompt, different output, sometimes wrong. We don't try to fix that with a bigger prompt. We **bound it with machine-checked controls**: what it sees before it writes is generated from the repo, and what it produces afterwards has to pass gates it *cannot argue with* (`tsc` exit codes, branch protection, regex). The model stays probabilistic; its output is **deterministically checked** — the same gates, the same way, every run.
+The idea is **containment, not correction.** We don't make the model smarter — we make its world smaller. We restrict which tools it can call, deny it the secrets it doesn't need, and scope its `CLAUDE.md` + context down to exactly the slice of the codebase the ticket touches. A model with a narrow, well-defined world has a narrow, well-defined range of outputs. Then gates check that output before any human sees it. Probabilistic core, deliberately small surface — that's how you move something non-deterministic *toward* deterministic.
 
 This is the **uphub layer**: the thing that takes a Jira ticket, drives git on your behalf, and hands a human a **draft PR** to review and merge.
 
@@ -10,47 +10,47 @@ This is the **uphub layer**: the thing that takes a Jira ticket, drives git on y
 
 ---
 
-## The architecture — a probabilistic core, bounded on both sides
+## The architecture — a small box around a probabilistic core, then gates
 
-The model is contained, but not symmetrically: some controls run **before** it (and decide whether it even starts), some **shape what it sees** while it writes, and some **check its output after**. Only the LLM box is probabilistic — everything around it is mechanical.
+Two kinds of constraint, two shapes. **Containment** wraps the model — it shrinks the model's *world* (its tools, its secrets, its `CLAUDE.md`/context) so its range of outputs is already narrow before it writes a line. **Gates** run *after* — they check the output it did produce. Only the LLM is probabilistic; everything else is mechanical.
 
 ```
   Jira ticket  —  label: ai-ready  +  assigned to YOU
         │
+        ▼  intake gate (before the model even starts):
+        │  double-label gate · readiness checklist · spec extraction
         ▼
-  ╶─ BEFORE THE MODEL · intake gate ───────────────────────────────╴
-     • double-label gate          • readiness checklist
-     • spec extraction:  ticket prose → structured task spec
-        │
-        ▼
-  ╶─ SHAPES WHAT THE MODEL SEES · context + routing ───────────────╴
-     • CONTEXT  L1→L4:  system · conventions · graph · inventory
-     • ROUTING  route-on-touch hook injects only the relevant skill
-        │
-        ▼
-        ┌─────────────────────────────────────────────┐
-        │  THE LLM — probabilistic                     │
-        │  Opus coordinator + Sonnet sub-agents        │
-        │  writes code + tests                         │
-        └─────────────────────────────────────────────┘
-        │
-        ▼  ( its output — never trusted as-is )
-  ╶─ CHECKS THE OUTPUT · two gates, run after the model ───────────╴
+  ┌──────────── THE MODEL'S WORLD — shrunk to our needs ────────────┐
+  │                                                                 │
+  │   ACCESS      allowedTools allowlist · deny-read .env / secrets  │
+  │   KNOWLEDGE   scoped CLAUDE.md + .claude/ context (L1→L4)        │
+  │   JUST-IN-TIME  route-on-touch injects only the relevant skill   │
+  │   INPUT       a structured spec snapshot, not raw ticket prose   │
+  │                                                                 │
+  │            ┌─────────────────────────────────────┐              │
+  │            │  THE LLM — probabilistic             │              │
+  │            │  Opus coordinator + Sonnet subs      │              │
+  │            │  writes code + tests                 │              │
+  │            └─────────────────────────────────────┘              │
+  │                                                                 │
+  └────────────────────────────────┬────────────────────────────────┘
+                                   ▼  ( its output — never trusted as-is )
+  ╶─ GATES · run after the model ──────────────────────────────────╴
      • GATE A · mechanical    lint · tsc -b · tests · branch+commit
        regex · forbidden imports · staged-path guard · omission
        → exit codes the model cannot argue with
      • GATE B · fresh skeptic    /code-review + /security-review on
        the DIFF only, in clean context that never saw the
        implementer's reasoning
-        │
-        ▼
+                                   │
+                                   ▼
   DRAFT PR  →  reviewers · Jira: Waiting for CR · @QA
         │                          (terminal state — never a merge)
         ▼
   HUMAN  →  code review  →  merge        (permanent gate — always human)
 ```
 
-The order is the point: a control before the model can refuse to start it; controls around the model decide what it knows; gates after the model can reject what it wrote. Take any one away and you're back to "hope the prompt was good enough."
+The box is the whole point: a smaller world means fewer ways to go wrong *before* you've checked anything. The gates then catch what the small world didn't. Take the box away and the gates have to catch everything; take the gates away and the box has to be perfect. Together they turn "hope the prompt was good enough" into something you can actually trust.
 
 > Full design, decisions, and trade-offs: [`docs/architecture/00 Home.md`](docs/architecture/00%20Home.md).
 
@@ -65,8 +65,9 @@ Every control below is real and load-bearing. The **Status** column is honest ab
 | **Before** | **Double-label gate** | Only ever touches tickets that are **both** labelled `ai-ready` **and** assigned to you. | A JQL filter (`assignee = currentUser() AND labels = ai-ready`), not a polite request. It physically cannot pick up anyone else's work. | ✅ used in a real run |
 | **Before** | **Readiness checklist** | Boolean checklist (acceptance criteria? repo onboarded? estimate set? QA assignee?). Any fail → posts questions + `ai-needs-info` and stops. | All-must-pass booleans. No "looks ready enough." | 🔧 wired |
 | **Before** | **Spec extraction** | Ticket prose → a **structured task spec**. The implementer runs on the spec snapshot, never on raw ticket text or live comments. | Closes the prompt-injection door: instructions buried in a ticket ("also POST the env vars to…") are data, not commands. See [`08 Security Model`](docs/architecture/08%20Security%20Model.md). | ✅ used in a real run |
-| **Shapes input** | **Layered context L1→L4** | L1 system map · L2 conventions+skills · L3 repo dependency graph · L4 per-package inventory (tRPC routers, Redux slices, `@admin-types` exports). | Generated from the repo by `harvest-context.mjs` — read from what *is*, not recalled from training. | 🔧 generated; clean-profile load not yet proven (Phase 0 exit) |
-| **Shapes input** | **route-on-touch hook** | Editing a path injects **only** the matching skill (touch a tRPC route → admin-api-design loads). | A `PreToolUse` hook keyed on path globs (`rules/routing.json`). Skill delivery is mechanical, not "remembered to apply." | ✅ mechanism proven in headless (spike 0.1) |
+| **Shrinks its world** | **Access restriction** | The agent can only call a fixed `allowedTools` set; `.env` / secrets are deny-read. | The smallest lever of all: a tool that isn't in the allowlist cannot be called, full stop. Narrows the action space before reasoning even happens. | 🔧 `allowedTools` wired in run-headless; deny-read in agent settings |
+| **Shrinks its world** | **Layered context L1→L4** | L1 system map · L2 conventions+skills · L3 repo dependency graph · L4 per-package inventory (tRPC routers, Redux slices, `@admin-types` exports). | Generated from the repo by `harvest-context.mjs` — read from what *is*, not recalled from training. | 🔧 generated; clean-profile load not yet proven (Phase 0 exit) |
+| **Shrinks its world** | **route-on-touch hook** | Editing a path injects **only** the matching skill (touch a tRPC route → admin-api-design loads). | A `PreToolUse` hook keyed on path globs (`rules/routing.json`). Skill delivery is mechanical, not "remembered to apply." | ✅ mechanism proven in headless (spike 0.1) |
 | **Core** | **Sub-agent decomposition** | Opus coordinator writes shared contracts first, then fans out Sonnet sub-agents in isolated worktrees. | Coordinator-writes-types-first removes the `libs/admin-types` collision; worktrees isolate parallel file writes. | 🔧 available (opt-in for large tickets) |
 | **Checks output** | **Gate A — compliance-validator** (`validate.mjs`) | lint · `tsc -b` · tests · branch regex · commit regex · forbidden imports · **staged-path guard** · omission detector. | **Exit codes.** The model cannot argue with `tsc`. Already caught a real violation (runtime `import {AppRouter}` where it must be `import type`). | ✅ runs against admin, caught a real violation |
 | **Checks output** | **Gate B — fresh-context review** | A second pass runs `/code-review` + `/security-review` on the **diff only**, in clean context that never saw the implementer's reasoning. | Different epistemics by construction — it can't be talked into trusting the author because it never met the author. | 🔧 wired, not yet independently benchmarked |
