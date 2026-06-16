@@ -30,7 +30,7 @@ A UI over a service must expose what the service can actually DO — not the min
    - delete → a delete action (with confirm);
    - create → the create form.
 3. **If an operation exists in the API but you're not exposing it, say so explicitly** in the PR/ticket (and why). Never silently ship a read-only list when the API supports full CRUD.
-4. **Quality bar (use Anthropic's `frontend-design` skill):** a table is not "a bare `<table>`". Apply real list/table UX — comfortable row height + padding, clear dividers, sticky header, hover + pointer cursor on interactive rows, aligned numeric columns, well-styled status chips, a row-actions affordance (edit/delete or a chevron), and proper empty/loading/error states that match the app.
+4. **Quality bar (use Anthropic's `frontend-design` skill):** a table is not "a bare `<table>`". Apply real list/table UX — comfortable row height + padding, clear dividers, sticky header, hover + pointer cursor on interactive rows, aligned numeric columns, well-styled status chips, a row-actions affordance (edit/delete or a chevron), and proper empty/loading/error states that match the app. **Wrap the whole screen's content — title, controls (search/filters/buttons), and table — inside a single white surface/card** (radius 16, soft shadow) on the app background; never leave the title or controls floating on the bare page background while only the table is carded.
 
 ## Why this rule exists
 Determinism applies to design too: the agent must not invent a look. It reads the existing system, applies a real design methodology, and layers the brand — so every agent-built screen is consistent, on-brand, and looks native to the app.
