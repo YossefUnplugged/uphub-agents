@@ -20,5 +20,17 @@ On top of the existing-system match, apply the niche's design profile (see [[11 
 existing-app convention  →  then frontend-design methodology  →  then brand tokens.
 The result must be indistinguishable in style from the screens around it.
 
+## Build the COMPLETE feature, not a read-only stub
+A UI over a service must expose what the service can actually DO — not the minimum. Before building:
+1. **Inspect the full API surface** of the service (the swagger / controller): list **every** operation — list, **get-one/detail**, **create**, **update/edit**, **delete**, status changes, export. Do NOT stop at list+create.
+2. **Map each operation to a UI interaction** and build them:
+   - list → table/grid (with real UX: loading, empty, error, pagination, sort, search);
+   - get-one/detail → **clicking a row opens a detail view** (rows must be interactive — a static table where clicking does nothing is a bug);
+   - update → an **edit** action (row action or inside the detail view);
+   - delete → a delete action (with confirm);
+   - create → the create form.
+3. **If an operation exists in the API but you're not exposing it, say so explicitly** in the PR/ticket (and why). Never silently ship a read-only list when the API supports full CRUD.
+4. **Quality bar (use Anthropic's `frontend-design` skill):** a table is not "a bare `<table>`". Apply real list/table UX — comfortable row height + padding, clear dividers, sticky header, hover + pointer cursor on interactive rows, aligned numeric columns, well-styled status chips, a row-actions affordance (edit/delete or a chevron), and proper empty/loading/error states that match the app.
+
 ## Why this rule exists
 Determinism applies to design too: the agent must not invent a look. It reads the existing system, applies a real design methodology, and layers the brand — so every agent-built screen is consistent, on-brand, and looks native to the app.
