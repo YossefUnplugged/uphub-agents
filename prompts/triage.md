@@ -46,6 +46,7 @@ You are the coordinator and you may delegate to parallel sub-agents whenever it 
 
 ### 4b. Write
 - Implement the brief (yourself and/or via the sub-agents above). Editing files triggers the route-on-touch hook, which injects the right skill patterns — apply them. Write code + tests together. Stage explicitly (`git add <files>`), NEVER `git add -A`. Commit: `<type>(<scope>): <desc> (TICKET)`.
+- **Any UI / design work → follow `standards/design.md`:** inspect the existing app's components FIRST and match them (consistency beats inventing), use Anthropic's `frontend-design` skill for methodology, then apply the brand profile (`unplugged-design`). Never introduce a one-off colour/shape that diverges from neighbouring screens.
 
 ## 5. Gate A — mechanical (cannot be argued with)
 Run: `node <agent-system>/scripts/validate.mjs --target admin`

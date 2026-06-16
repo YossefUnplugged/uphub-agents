@@ -27,7 +27,7 @@
     {
       "glob": "apps/admin_client/src/components/**",
       "skills": ["admin-components", "admin-errors"],
-      "hint": "React component (MUI + tss-react). Arrow function + inline destructured props + default export (see admin-conventions). Handle errors via the snackbar/error patterns. Patterns: admin-components + admin-errors."
+      "hint": "React component (MUI + tss-react). Arrow function + inline destructured props + default export (see admin-conventions). Handle errors via the snackbar/error patterns. For any visual/design work follow standards/design.md — match the existing app's components first, then Anthropic frontend-design + brand tokens; never a one-off look. Patterns: admin-components + admin-errors."
     },
     {
       "glob": "apps/admin_client/src/**/{forms,*Form}*/**",
