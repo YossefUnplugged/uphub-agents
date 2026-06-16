@@ -26,8 +26,13 @@
     },
     {
       "glob": "apps/admin_client/src/components/**",
-      "skills": ["admin-components", "admin-errors"],
-      "hint": "React component (MUI + tss-react). Arrow function + inline destructured props + default export (see admin-conventions). Handle errors via the snackbar/error patterns. For any visual/design work follow standards/design.md — match the existing app's components first, then Anthropic frontend-design + brand tokens; never a one-off look. Patterns: admin-components + admin-errors."
+      "skills": ["admin-components", "admin-design", "admin-errors"],
+      "hint": "React component (MUI + tss-react). Arrow function + inline destructured props + default export (see admin-conventions). Handle errors via the snackbar/error patterns. For any visual/design work use the admin-design skill (production-sourced tokens: Poppins, #495dc5, search radius 20 + #C8CCDC, white-card layout, width:100% root) and standards/design.md — match the existing app first; never a one-off look. Patterns: admin-components + admin-design + admin-errors."
+    },
+    {
+      "glob": "apps/admin_client/src/**/*[Ss]tyles.ts",
+      "skills": ["admin-design"],
+      "hint": "tss-react STYLE file for an admin web screen. Use ONLY production tokens (admin-design skill): Poppins; primary #495dc5 / hover #3d4ea8; cards #fff radius 15 + shadow 0 0 10 rgba(0,0,0,.1); search/input height 30 radius 20 border #C8CCDC focus #495dc5; pill buttons radius 100. Top-level page root MUST be width:100% height:100% or it renders centered/narrow. Do NOT copy admin-components' placeholder values (#1976d2/#333/radius 8) and do NOT use the mobile unplugged-design (Inter/radius 12). Patterns: admin-design."
     },
     {
       "glob": "apps/admin_client/src/**/{forms,*Form}*/**",

@@ -14,7 +14,11 @@ Build the new screen so it looks like it **belongs next to the existing ones**. 
 Load **Anthropic's `frontend-design` skill** for the design methodology — visual hierarchy, spacing rhythm, layout, responsive behaviour, state coverage (empty / loading / error), and accessibility. Apply it to every design task (install it from the skills marketplace if it isn't present). This is the "how to design well" layer, on top of the "what our brand looks like" layer.
 
 ## 3. Apply the niche's design profile (brand)
-On top of the existing-system match, apply the niche's design profile (see [[11 Profiles and Niches]]). For our product the brand layer is **`unplugged-design`** — primary `#495dc5`, `Inter`, pill buttons, input radius 12 + focus `#495dc5`, semantic green `#00B931` / red `#ed2736`. **Reconcile brand tokens WITH the existing system**; where they conflict, prefer the established app pattern unless the ticket explicitly asks to rebrand.
+On top of the existing-system match, apply the niche's design profile (see [[11 Profiles and Niches]]). **Pick the profile that matches the target:**
+- **Admin web** (`apps/admin_client`) → the **`admin-design`** skill: production-sourced tokens — `Poppins`, primary `#495dc5` / hover `#3d4ea8`, white cards radius 15 + shadow, search/input height 30 radius **20** border `#C8CCDC` focus `#495dc5`, pill buttons radius 100, and the `width:100%` page-root rule. This is the authority for admin web.
+- **UP-phone mobile** → the **`unplugged-design`** skill (`Inter`, 360×800, input radius 12, flat list rows). **Do NOT apply the mobile tokens to admin web** — they conflict (Inter vs Poppins, radius 12 vs 20, flat rows vs carded tables).
+
+**Reconcile brand tokens WITH the existing system**; where they conflict, prefer the established app pattern unless the ticket explicitly asks to rebrand.
 
 ## Order of authority (when they disagree)
 existing-app convention  →  then frontend-design methodology  →  then brand tokens.

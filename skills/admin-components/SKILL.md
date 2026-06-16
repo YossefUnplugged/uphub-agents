@@ -9,6 +9,8 @@ MUI component patterns and tss-react styling for Admin Nx monorepo frontend.
 
 > Component syntax (arrow function with inline destructured props, no `React.FC`, default export), export patterns, and file naming follow **admin-conventions** (the single source of truth).
 
+> ⚠️ **Colours/radii/fonts in the code blocks below are STRUCTURAL PLACEHOLDERS, not brand values.** Values like `#1976d2`, `#333`, `#e0e0e0`, `borderRadius: 8` are MUI defaults used to show the *pattern shape* — they are NOT the admin look. For every real visual value (colours, radius, font, search field, buttons, card layout) use the **admin-design** skill, which carries the production-sourced tokens. Copy the *structure* here; take the *tokens* from admin-design.
+
 ---
 
 ## Component Architecture
