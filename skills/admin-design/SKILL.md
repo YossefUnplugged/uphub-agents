@@ -36,9 +36,13 @@ These reusable components already exist — pass props, don't re-implement:
 | **Dialog** | `maxWidth="sm" fullWidth`, body in `<form onSubmit>`, title 20/600, one dialog for add+edit (switch on `mode`) |
 | **Empty / muted text** | `#757575` / `#666`, 16px centered "No data available" |
 
-## The two layout rules that bite
-1. **Top-level page root must be `width:"100%", height:"100%"`** (+ `boxSizing:"border-box"` with padding). Routed screens render inside `appLayout`'s `contentContainer`, a flex row with `justifyContent/alignItems: center` — a root without a width shrinks to content and renders **centered and narrow**.
+## The three layout rules that bite
+1. **The top-level page root must FILL the content area — but with a small gutter, never edge-to-edge.** Routed screens render inside `appLayout`'s `contentContainer`, a flex row with `justifyContent/alignItems: center`. Two failure modes to avoid:
+   - root with **no width** → shrinks to content, renders **centered and narrow** (bug);
+   - root at a flat **`width:100% / height:100%`** → bleeds edge-to-edge and **butts against / overflows neighbouring components** (bug).
+   Correct: keep a ~12px gutter on all sides and subtract it from the size so nothing overflows — `margin:"12px"; width:"calc(100% - 24px)"; height:"calc(100% - 24px)"; boxSizing:"border-box"`. (Store/VPN get the same breathing room via `padding:0 10px` on their container.)
 2. **Wrap title + controls + table in ONE white card** (radius 15, soft shadow) on the app background; never leave the title or search/filters floating on the bare page while only the table is carded.
+3. **Leave a little space between sibling components** — adjacent cards/panels get a gap (`gap`/`margin` ~10–12px); a screen's content should never touch the app chrome or a neighbouring panel.
 
 ## Build the COMPLETE feature
 A table is interactive: **row click → detail/edit** (a static table where clicking does nothing is a bug). Inspect the service's full API and expose list · get-one · create · update · delete (with confirm). Surface anything you intentionally omit in the PR. Sticky header, hover+pointer rows, dividers, chips, and empty/loading/error states are part of "done". (Full ordering rule: `standards/design.md`.)
@@ -50,7 +54,8 @@ A table is interactive: **row click → detail/edit** (a static table where clic
 | Pill-shaped action buttons | AAA buttons are **rectangular** (`#495dc5` contained / outlined); pill is search-only |
 | Copied `admin-components` placeholders (`#1976d2`,`#333`,`#e0e0e0`, radius 8) | Use the tokens above / the recipes file |
 | One-off colour (e.g. `#6C63FF`) | Only `#495dc5` + neutrals already on screen |
-| Root has no `width` → centered/narrow | `width:100%; height:100%` (Rule 1) |
+| Root has no `width` → centered/narrow | Fill with a gutter: `margin:12px; width:calc(100% - 24px)` (Rule 1) |
+| Root at flat `width:100%/height:100%` → bleeds edge-to-edge, touches neighbours | Subtract the gutter via `calc(...)` (Rule 1) |
 | Hand-rolled `<table>`, non-clickable rows | Reuse `GenericTable`; clickable rows, gated edit/delete, states |
 | Rebuilt a table/dialog from scratch | Reuse `GenericTable` / `AddItemDialog` unless the ticket truly needs more |
 
