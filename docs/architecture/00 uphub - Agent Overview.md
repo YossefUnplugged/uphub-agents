@@ -4,7 +4,7 @@ status: living
 updated: 2026-06-17
 ---
 
-# 00 Home — Agent Ecosystem Map of Content
+# uphub — Agent Overview (Map of Content)
 
 > **TL;DR:** The master map of the agent ecosystem — what exists, what gets built, in what order, who owns what. Any model starting work begins here. Execution is **local-only** by owner decision (ADR-006).
 

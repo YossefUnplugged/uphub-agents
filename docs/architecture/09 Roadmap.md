@@ -65,4 +65,4 @@ Weeks 7–9:  2.3 + 2.4 + 2.5 (auto-triage live, assisted)
 Then:    Phase 3 when two weeks of Phase-2 PRs needed no ai-blocked rescue
 ```
 
-Related: [[00 Home]] · [[04 Agent Roster]] · all [[decisions/ADR-001 Repo Over Plugin|ADRs]]
+Related: [[00 uphub - Agent Overview]] · [[04 Agent Roster]] · all [[decisions/ADR-001 Repo Over Plugin|ADRs]]
