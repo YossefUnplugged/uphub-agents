@@ -46,4 +46,4 @@ The skills ecosystem (composition, data-fetching, scaffolds, styling) is the mod
 - **Now:** the `admin` Nx monorepo (Express+tRPC backend, React 18+Vite client, shared types lib).
 - **Later:** `shopping-server` (Kotlin), `rss-feed-service` (Kotlin), `shopping-google-scraper` (TS) onboard via the per-repo skeleton in [[05 Context Layers]].
 
-Related: [[02 Current State]] · [[03 Target Architecture]] · [[00 uphub - Agent Overview]]
+Related: [[02 Current State]] · [[03 Target Architecture]] · [[uphub - Agent Overview]]

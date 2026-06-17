@@ -1,6 +1,6 @@
 {
 	"nodes":[
-		{"id":"home0000000000001","type":"file","file":"00 uphub - Agent Overview.md","x":-460,"y":-40,"width":360,"height":120},
+		{"id":"home0000000000001","type":"file","file":"uphub - Agent Overview.md","x":-460,"y":-40,"width":360,"height":120},
 		{"id":"jira0000000000001","type":"text","text":"## Jira (UNP)\nTicket + label `ai-ready`\nEstimate · AC · QA assignee","x":0,"y":-40,"width":280,"height":140,"color":"5"},
 		{"id":"intake00000000001","type":"text","text":"## STAGE 1 — Intake\n**Local:** /create-task-for-session-uphub · /task-intake\n**Remote:** remote-triage (readiness score → spec)\n→ branch UNP-NNNN · Jira → In Progress","x":360,"y":-60,"width":380,"height":180,"color":"4"},
 		{"id":"exec000000000001","type":"text","text":"## STAGE 2 — Execution\nSingle implementer\ncode + tests together\nskills via **route-on-touch**","x":820,"y":-60,"width":320,"height":180,"color":"4"},

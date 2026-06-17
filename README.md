@@ -52,7 +52,7 @@ Two kinds of constraint, two shapes. **Containment** wraps the model — it shri
 
 The box is the whole point: a smaller world means fewer ways to go wrong *before* you've checked anything. The gates then catch what the small world didn't. Take the box away and the gates have to catch everything; take the gates away and the box has to be perfect. Together they turn "hope the prompt was good enough" into something you can actually trust.
 
-> Full design, decisions, and trade-offs: [`docs/architecture/00 uphub - Agent Overview.md`](docs/architecture/00%20uphub%20-%20Agent%20Overview.md).
+> Full design, decisions, and trade-offs: [`docs/architecture/uphub - Agent Overview.md`](docs/architecture/uphub%20-%20Agent%20Overview.md).
 
 ---
 
@@ -195,7 +195,7 @@ node benchmark/run.mjs --target admin --dry-run     # replay-benchmark wiring
 ---
 
 ## Learn more
-- The full design & decisions: [`docs/architecture/00 uphub - Agent Overview.md`](docs/architecture/00%20uphub%20-%20Agent%20Overview.md)
+- The full design & decisions: [`docs/architecture/uphub - Agent Overview.md`](docs/architecture/uphub%20-%20Agent%20Overview.md)
 - Target architecture (the three-stage pipeline): [`docs/architecture/03 Target Architecture.md`](docs/architecture/03%20Target%20Architecture.md)
 - The security / threat model: [`docs/architecture/08 Security Model.md`](docs/architecture/08%20Security%20Model.md)
 - Why a separate repo + how niches replicate: [`docs/architecture/11 Profiles and Niches.md`](docs/architecture/11%20Profiles%20and%20Niches.md)
