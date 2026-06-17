@@ -1,8 +1,8 @@
 ---
 tags: [agent-ecosystem, routing, skills]
-status: design
-updated: 2026-06-11
-source-of-truth-when-built: admin/.claude/rules/skill-routing.md + admin/.claude/settings.json (hook)
+status: built
+updated: 2026-06-17
+source-of-truth: rules/routing.json (synced → .claude/context/routing.json) + hooks/route-on-touch.mjs + the `hooks` key in .claude/settings.json
 ---
 
 # 06 Skill Routing
@@ -16,25 +16,27 @@ First idea: the plan step outputs a file list; a table maps globs → skills. Ad
 ## The design: three mechanisms, layered
 
 ### 1. Route-on-touch (deterministic, the core)
-A `PreToolUse` hook on Edit/Write matches the **actual file path being modified** against the routing table and injects the mapped skill *at edit time*. The agent cannot edit `apps/admin_backend/src/trpc/routes/storeRoute.ts` without the tRPC patterns being in context — no judgment involved.
+A `PreToolUse` hook on Edit/Write/MultiEdit matches the **actual file path being modified** against the routing table and injects the mapped guidance *at edit time*. The agent cannot edit `apps/admin_backend/src/trpc/routes/storeRoute.ts` without the tRPC patterns being named in context — no judgment involved.
 
-Routing table (canonical: `admin/.claude/rules/skill-routing.md`; globs reference `.claude/config/paths.json`):
+Routing table — canonical: **`rules/routing.json`** in this repo (synced by `sync-target.mjs` → `<target>/.claude/context/routing.json`). Each route carries `glob`, `skills`, and a `hint`. Current routes:
 
-| Path glob (file being edited) | Inject skill |
+| Path glob (file being edited) | Inject (skills named in the hint) |
 |---|---|
-| `apps/admin_backend/src/trpc/{routes,controllers}/**` | admin-api-design |
+| `apps/admin_backend/src/trpc/routes/**` | admin-routing + admin-api-design |
+| `apps/admin_backend/src/trpc/controllers/**` | admin-api-design + admin-services |
 | `apps/admin_backend/src/redis/**` | admin-caching |
 | `apps/admin_backend/src/{rabbitMQ,utils,MicrosoftGraph}/**` | admin-services |
-| `apps/admin_client/src/components/**` | admin-components |
-| `**/*Form.tsx`, `apps/admin_client/src/**/forms/**` | admin-forms |
+| `apps/admin_client/src/components/**` | admin-components + admin-design + admin-errors |
+| `apps/admin_client/src/**/*[Ss]tyles.ts` | admin-design (the AAA-sourced design system) |
+| `apps/admin_client/src/**/{forms,*Form}*/**` | admin-forms |
 | `apps/admin_client/src/redux/**` | admin-state |
 | `libs/admin-types/**` | admin-api-design + admin-components (both sides of the contract) |
-| `**/*.test.{ts,tsx}`, `**/__tests__/**` | admin-testing |
-| *(always, session start)* | admin-conventions + `.claude/rules/*` |
+| `**/*.{test,spec}.{ts,tsx}` | admin-testing |
+| *(always — `alwaysLoad`)* | admin-conventions |
 
-Unmapped path ⇒ the hook emits a `router-miss: <path>` line that the validator requires in the PR body — every miss is audited and feeds table growth.
+Unmapped path ⇒ the hook emits a `router-miss: <path>` line (to `.claude/.router-miss.log`) that the validator surfaces in the PR body — every miss is audited and feeds table growth.
 
-**Mechanism** (so a builder doesn't have to invent it): the hook is configured in `admin/.claude/settings.json` as a `PreToolUse` matcher on `Edit|Write` running `.claude/scripts/route.mjs`. The script receives the tool-input JSON, matches `file_path` against the `paths.json` globs, and returns hook output whose `additionalContext` carries the mapped SKILL.md body (no-op if that skill was already injected this session). Unmatched paths append to `.claude/.router-miss.log` (untracked); the validator reads the log at PR time and writes the `router-miss` lines into the PR body.
+**Mechanism** (matches the built code, so a builder doesn't re-invent it): the hook is `hooks/route-on-touch.mjs`, synced to `<target>/.claude/hooks/route-on-touch.mjs` and registered by `sync-target.mjs` in the **`hooks` key of `.claude/settings.json`** as a `PreToolUse` matcher on `Edit|Write|MultiEdit` (`settings.local.json` — human-owned permissions — is never touched). The script reads the tool-input JSON from stdin, matches `file_path` against the globs in `context/routing.json`, and returns `hookSpecificOutput.additionalContext` carrying the matched **`hint`** — short *reference* guidance that names the skill(s) to apply, **not** the full SKILL.md body and **not** imperative commands (a model treats injected commands as suspicious — see the 0.1 spike). It never blocks; always exits 0. Unmatched paths append to `.router-miss.log` (untracked); the validator reads the log at PR time.
 
 ### 2. Planner thin context (handles the chicken-and-egg)
 The plan step doesn't get domain skills — it gets a permanently-loaded **thin layer**: L1 + L3 repo map + a cross-cutting checklist:
@@ -64,6 +66,6 @@ Granularity stays: **dedupe content, don't merge skills.** Route-on-touch reward
 | Execution order / forbidden actions | `admin/.claude/rules/workflow.md` | plugin `rules/workflow-rules.json` · agent-teams/CLAUDE.md (keeps orchestration-only content) |
 | People (reviewers, QA) | `uphub-skills/config.json` (org-level; the repo lives on GitHub at `werunplugged/uphub-skills`, so it is reachable remotely) | plugin `config/reviewers.json` (**delete**) · `admin/.claude/config/reviewers.json` is a synced copy (drift PRs) that remote runs read |
 
-Skill count after dedupe: 20 (21 − `admin-git`; `figma-to-code`, `admin-diagrams`, `link-workspace-packages` stay plugin-local since they need MCP/GUI; the rest move to `admin/.claude/skills/`).
+**Status — done:** the repo now ships **11 skills** in `skills/` — the deduped `admin-*` set (api-design, caching, components, conventions, errors, forms, routing, services, state, testing) plus **`admin-design`** (the AAA-sourced design system) and `unplugged-design`. MCP/GUI-only skills (`figma-to-code`, `admin-diagrams`, `link-workspace-packages`) stayed plugin-local. `sync-target.mjs` mirrors `skills/` into `<target>/.claude/skills/`.
 
 Related: [[04 Agent Roster]] · [[05 Context Layers]] · [[decisions/ADR-002 Route On Touch]]
