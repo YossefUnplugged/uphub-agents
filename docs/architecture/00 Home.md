@@ -1,16 +1,16 @@
 ---
 tags: [agent-ecosystem, moc]
 status: living
-updated: 2026-06-11
+updated: 2026-06-17
 ---
 
 # 00 Home — Agent Ecosystem Map of Content
 
 > **TL;DR:** The master map of the agent ecosystem — what exists, what gets built, in what order, who owns what. Any model starting work begins here. Execution is **local-only** by owner decision (ADR-006).
 
-This vault folder is the **design record** for Unplugged's deterministic AI dev-agent ecosystem — the "remote junior developer" that takes a Jira ticket in and delivers a standards-compliant draft PR out.
+This folder (`docs/architecture/` in the **`uphub-agents`** repo) is the **canonical design record** for Unplugged's deterministic AI dev-agent ecosystem — the "remote junior developer" that takes a Jira ticket in and delivers a standards-compliant draft PR out. (Edit it here; Obsidian opens this same folder as a vault for graph/canvas — there is no second copy.)
 
-**Rule of authority:** these notes are *design-time* truth. Once a thing is built, *execution-time* truth lives in repo files (`admin/.claude/**`, workflow YAML). Each note's frontmatter and body say which repo file supersedes it. If a note and a repo file disagree, **the repo file wins** — then fix the note.
+**Rule of authority:** these notes are the *design-time* truth (the "why"). The *execution-time* truth is the shipped artifacts in this same repo — `prompts/`, `standards/`, `skills/`, `scripts/`, `rules/`, `hooks/`, `config/` (and what `sync-target.mjs` stamps into `admin/.claude/**`). If a note disagrees with a shipped script/skill, **the script wins** — then fix the note.
 
 ## Reading order (for humans and for models)
 
@@ -24,6 +24,7 @@ This vault folder is the **design record** for Unplugged's deterministic AI dev-
 8. [[08 Security Model]] — untrusted input, platform enforcement, tripwires
 9. [[09 Roadmap]] — phases, build order, the replay benchmark exit gate
 10. [[10 Ecosystem Map]] — admin's verified integrations + the org repo landscape (which repos/languages the agent can get tasks for, and what "onboarded" means)
+11. [[11 Profiles and Niches]] — CORE vs pluggable NICHE profiles: how the same engine replicates to a new codebase (Java/Android)
 
 Decisions live in [[decisions/ADR-001 Repo Over Plugin|decisions/]] — read an ADR before re-opening a settled argument.
 
@@ -36,15 +37,16 @@ Visual overview: [[Pipeline Map.canvas|Pipeline Map]]
 | `/create-task-for-session-uphub` | Intake | ✅ exists | — | [[04 Agent Roster]] |
 | `/scaner-my-missions-uphub` | Audit | ✅ exists | — | [[04 Agent Roster]] |
 | `/create-pr-and-update-uphub` | Closing | ✅ exists | — | [[04 Agent Roster]] |
-| ada plugin (21 skills, agent team) | Execution | ✅ exists, needs dedupe | — | [[02 Current State]] |
-| Commit `.claude/` + `CLAUDE.md` to admin repo | Foundation | ❌ blocked (gitignore, needs A1 buy-in) | S | [[05 Context Layers]] |
-| compliance-validator script | Gate | 🔨 build | M | [[04 Agent Roster]] |
-| context-harvester (L3/L4 generator) | Context | 🔨 build | L | [[04 Agent Roster]] |
-| Skill dedupe + move into repo | Routing | 🔨 build | L | [[06 Skill Routing]] |
-| route-on-touch hook | Routing | 🔨 build | M | [[06 Skill Routing]] |
-| Replay benchmark (Phase 1 exit) | Quality | 🔨 build | M | [[09 Roadmap]] |
+| ada plugin (21 skills, agent team) | Execution | ✅ exists (source for the deduped skills) | — | [[02 Current State]] |
+| Standalone `uphub-agents` repo + `sync-target.mjs` → `admin/.claude/` | Foundation | ✅ done (supersedes A1 / the gitignore blocker — dead) | — | [[05 Context Layers]] · ADR-001 |
+| compliance-validator script (Gate A) | Gate | ✅ built (caught a real violation) | — | [[04 Agent Roster]] |
+| context-harvester (L3/L4 generator) | Context | ✅ built | — | [[04 Agent Roster]] |
+| Skill dedupe + move into repo (incl. `admin-design` design system) | Routing | ✅ done (11 skills) | — | [[06 Skill Routing]] |
+| route-on-touch hook | Routing | ✅ built (fires in real + headless) | — | [[06 Skill Routing]] |
+| Replay benchmark (Phase 1 exit) | Quality | 🔨 built; awaits clean-profile run | M | [[09 Roadmap]] |
+| Clean-profile smoke test (Phase 0 exit / kill switch) | Quality | ⏳ user-run gate (pending) | M | [[09 Roadmap]] |
 | pr-feedback skill (local, via `gh`) | Automation | 🔨 Phase 2 | S | [[07 Remote Execution]] |
-| auto-triage (scheduled local headless run) | Automation | 🔨 Phase 2/3 | L | [[07 Remote Execution]] |
+| auto-triage + close + scheduler (local headless) | Automation | 🔨 built as drafts; await a live Jira+gh run | L | [[07 Remote Execution]] |
 
 ## Build status (2026-06-14)
 
