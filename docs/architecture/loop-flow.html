@@ -19,7 +19,8 @@
   .wrap{max-width:760px;margin:0 auto}
   h1{font-size:26px;text-align:center;margin-bottom:6px}
   .sub{text-align:center;color:var(--dim);font-size:14px;margin-bottom:8px}
-  .legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0 28px;font-size:12px;color:var(--dim)}
+  .hint{text-align:center;color:var(--accent2);font-size:12.5px;margin-bottom:18px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:14px 0 26px;font-size:12px;color:var(--dim)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
   code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-family:Consolas,monospace;font-size:.85em;color:var(--accent);direction:ltr;display:inline-block}
@@ -27,10 +28,11 @@
   .flow{display:flex;flex-direction:column;align-items:center;gap:0}
   .node{
     width:100%;background:var(--bg2);border:1px solid var(--line);
-    border-radius:12px;padding:14px 18px;position:relative;
+    border-radius:12px;padding:14px 18px;position:relative;cursor:pointer;
     border-inline-start:4px solid var(--c,var(--accent2));
-    box-shadow:0 2px 10px rgba(0,0,0,.25);
+    box-shadow:0 2px 10px rgba(0,0,0,.25);transition:.13s;
   }
+  .node:hover{transform:translateY(-2px);border-color:var(--c,var(--accent2));box-shadow:0 6px 18px rgba(0,0,0,.4)}
   .node .num{
     position:absolute;inset-inline-start:-13px;top:16px;width:26px;height:26px;border-radius:50%;
     background:var(--c,var(--accent2));color:#15151a;font-weight:700;font-size:13px;
@@ -38,6 +40,7 @@
   }
   .node .hd{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px}
   .node .hd .ico{font-size:18px}
+  .node .more{margin-inline-start:auto;font-size:11.5px;color:var(--accent2);font-weight:600;white-space:nowrap}
   .node .ds{color:var(--dim);font-size:13.5px;margin-top:5px}
   .node .mech{
     direction:ltr;text-align:left;background:#15151a;border:1px solid var(--line);
@@ -52,23 +55,47 @@
   .arrow::after{content:"▼";position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);color:var(--accent);font-size:11px}
   @keyframes flow{to{background-position:0 10px}}
 
-  .loopback{
-    width:100%;margin-top:14px;border:1px dashed var(--accent2);border-radius:12px;
-    padding:11px 16px;text-align:center;color:var(--accent2);font-size:13.5px;background:rgba(122,162,247,.06)
-  }
-  .human{
-    width:100%;margin-top:26px;background:rgba(198,120,221,.08);border:1px dashed var(--purple);
-    border-radius:12px;padding:14px 18px;border-inline-start:4px solid var(--purple)
-  }
+  .loopback{width:100%;margin-top:14px;border:1px dashed var(--accent2);border-radius:12px;padding:11px 16px;text-align:center;color:var(--accent2);font-size:13.5px;background:rgba(122,162,247,.06)}
+  .human{width:100%;margin-top:26px;background:rgba(198,120,221,.08);border:1px dashed var(--purple);border-radius:12px;padding:14px 18px;border-inline-start:4px solid var(--purple);cursor:default}
   .human .hd{color:var(--purple)}
   .never{margin-top:22px;font-size:12.5px;color:var(--dim);text-align:center;border-top:1px solid var(--line);padding-top:14px}
   .never b{color:var(--red)}
+
+  /* modal */
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50}
+  #modal.open{display:flex}
+  .sheet{background:var(--bg2);border:1px solid var(--line);border-radius:14px;max-width:680px;width:100%;padding:22px 26px 28px;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:pop .18s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  #modalClose{float:left;cursor:pointer;color:var(--dim);font-size:22px;line-height:1;border:none;background:none}
+  #modalClose:hover{color:var(--txt)}
+  .sheet h2{font-size:20px;margin-bottom:4px}
+  .sheet .lead{color:var(--dim);font-size:13.5px;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .sheet h3{font-size:14px;color:var(--accent2);margin:16px 0 7px}
+  .sheet ul,.sheet ol{padding-inline-start:22px;margin-bottom:10px}
+  .sheet li{margin-bottom:6px;font-size:13.5px}
+  .sheet .mech{direction:ltr;text-align:left;background:#15151a;border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-family:Consolas,monospace;font-size:11.5px;color:var(--green);margin:8px 0;white-space:pre-wrap;line-height:1.5}
+  .sheet .stop{border:1px dashed var(--red);background:#2a1c1f;color:#f0b8bd;border-radius:7px;padding:8px 11px;font-size:12.5px;margin:8px 0}
+  .sheet .stop b{color:var(--red)}
+  .sheet .keep{border:1px dashed var(--green);background:#16241a;color:#bfe6c7;border-radius:7px;padding:8px 11px;font-size:12.5px;margin:8px 0}
+  /* mini-diagram (step 4) */
+  .mini{display:flex;flex-direction:column;align-items:center;gap:0;margin:10px 0}
+  .mbox{background:var(--bg3);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12.5px;text-align:center;width:100%}
+  .mbox.coord{border-inline-start:3px solid var(--accent)}
+  .mbox.contract{border-inline-start:3px solid var(--yellow)}
+  .mbox.integrate{border-inline-start:3px solid var(--accent)}
+  .mbox b{display:block;margin-bottom:2px}
+  .mbox .t{color:var(--dim);font-size:11.5px}
+  .marr{color:var(--accent);font-size:11px;margin:5px 0}
+  .mrow{display:flex;gap:10px;width:100%}
+  .mrow .mbox{border-inline-start:3px solid var(--accent2)}
+  .tag{display:inline-block;background:#1a2740;color:var(--accent2);border-radius:5px;padding:0 6px;font-family:Consolas,monospace;font-size:11px;direction:ltr}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🔁 הלולאה האוטונומית</h1>
   <div class="sub">מ־<code>/loop</code> / ה־wake המתוזמן — ועד Draft PR + העברת Jira ל־<b>Waiting for CR</b>. הכול מקומי (ADR-006).</div>
+  <div class="hint">👆 לחץ על כל שלב לדיאגרמה מפורטת שלו</div>
 
   <div class="legend">
     <span><i class="dot" style="background:var(--accent2)"></i> טריגר/קליטה</span>
@@ -76,93 +103,263 @@
     <span><i class="dot" style="background:var(--txt)"></i> ביצוע</span>
     <span><i class="dot" style="background:var(--green)"></i> שערי פלט</span>
     <span><i class="dot" style="background:var(--accent)"></i> סגירה</span>
-    <span><i class="dot" style="background:var(--red)"></i> עצירה (STOP)</span>
-    <span><i class="dot" style="background:var(--purple)"></i> שער אנושי קבוע</span>
+    <span><i class="dot" style="background:var(--red)"></i> עצירה</span>
+    <span><i class="dot" style="background:var(--purple)"></i> שער אנושי</span>
   </div>
 
   <div class="flow">
 
-    <div class="node" style="--c:var(--accent2)">
+    <div class="node" data-detail="d0" style="--c:var(--accent2)">
       <div class="num">0</div>
-      <div class="hd"><span class="ico">⏰</span> הערה (wake)</div>
-      <div class="ds">Task Scheduler מפעיל tick (עם נעילת single-instance — סשן אינטראקטיבי קודם), או <code>/loop</code> / הרצה ידנית. מריץ את הסוכן headless עם פרוטוקול ה־triage. בודק בריאות (Jira/gh/MCP) לפני שמתחיל.</div>
+      <div class="hd"><span class="ico">⏰</span> הערה (wake) <span class="more">פרטים ›</span></div>
+      <div class="ds">Task Scheduler tick (נעילת single-instance — סשן אינטראקטיבי קודם), או <code>/loop</code> / הרצה ידנית → מריץ את הסוכן headless עם פרוטוקול ה־triage + בדיקת בריאות.</div>
       <div class="mech">triage-loop.ps1 → run-headless.ps1 → claude -p (prompts/triage.md)</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--accent2)">
+    <div class="node" data-detail="d1" style="--c:var(--accent2)">
       <div class="num">1</div>
-      <div class="hd"><span class="ico">🔎</span> Poll — בוחר טיקט אחד</div>
-      <div class="ds">שולף מ־Jira לפי JQL. <b>רואה אך ורק טיקטים שמשויכים אליך</b> — לא ניתן לגעת בטיקט של מישהו אחר.</div>
+      <div class="hd"><span class="ico">🔎</span> Poll — בוחר טיקט אחד <span class="more">פרטים ›</span></div>
+      <div class="ds">שולף מ־Jira לפי JQL. רואה אך ורק טיקטים שמשויכים אליך.</div>
       <div class="mech">assignee = currentUser() AND labels = ai-ready AND status = "To Do"</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--yellow)">
+    <div class="node" data-detail="d2" style="--c:var(--yellow)">
       <div class="num">2</div>
-      <div class="hd"><span class="ico">✅</span> Readiness checklist (חובה הכול)</div>
-      <div class="ds">repo onboarded · יש acceptance criteria · estimate (מעל 4ש׳ או נתיב אבטחה → דורש <code>plan-approved</code>) · QA משויך · אין PR פתוח כבר.</div>
-      <div class="branch">⛔ כשל → <b>לא כותב קוד</b>. מנסח טיוטת <code>ai-needs-info</code> לסקירה אנושית ו־STOP.</div>
+      <div class="hd"><span class="ico">✅</span> Readiness checklist <span class="more">פרטים ›</span></div>
+      <div class="ds">5 בדיקות (כולן חובה): onboarded · AC · estimate · QA · אין PR פתוח.</div>
+      <div class="branch">⛔ כשל → לא כותב קוד; טיוטת <code>ai-needs-info</code> + STOP.</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--yellow)">
+    <div class="node" data-detail="d3" style="--c:var(--yellow)">
       <div class="num">3</div>
-      <div class="hd"><span class="ico">🧱</span> Spec extraction</div>
-      <div class="ds">חומת־אש לקלט לא־מהימן: טקסט הטיקט הופך ל<b>מפרט מובנה</b>. הוראות זדוניות שמוטמעות בטיקט (״תשלח את ה־env ל…״) = דאטה, לא פקודה.</div>
+      <div class="hd"><span class="ico">🧱</span> Spec extraction <span class="more">פרטים ›</span></div>
+      <div class="ds">חומת־אש לקלט לא־מהימן: טקסט הטיקט → מפרט מובנה. חוזה API חיצוני — מביא את האמיתי, לעולם לא ממציא.</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--txt)">
+    <div class="node" data-detail="d4" style="--c:var(--txt)">
       <div class="num">4</div>
-      <div class="hd"><span class="ico">⌨️</span> Implement</div>
-      <div class="ds">פותח ענף <code>UNP-NNNN</code>, כותב קוד + טסטים. <b>route-on-touch</b> מזריק את ה־skill הנכון לכל קובץ שנוגעים בו. (אופ׳: פירוק ל־sub-agents לטיקט גדול.)</div>
-      <div class="mech">branch UNP-NNNN · route-on-touch → admin-* skills</div>
+      <div class="hd"><span class="ico">⌨️</span> Implement <span class="more">פרטים ›</span></div>
+      <div class="ds">ענף <code>UNP-NNNN</code> → coordinator כותב את ה־contract קודם → fan-out ל־sub-agents (back/front) ב־worktrees → אינטגרציה.</div>
+      <div class="mech">contract first → Agent(model:sonnet, isolation:worktree) ×N → merge</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--green)">
+    <div class="node" data-detail="d5" style="--c:var(--green)">
       <div class="num">5</div>
-      <div class="hd"><span class="ico">🛡️</span> Gate A — מכני</div>
-      <div class="ds">סקריפט מריץ: lint · <code>tsc -b</code> · טסטים · regex של branch/commit · imports אסורים · staged-path · גלאי־השמטות. קודי־יציאה שאי אפשר להתווכח איתם.</div>
+      <div class="hd"><span class="ico">🛡️</span> Gate A — מכני <span class="more">פרטים ›</span></div>
+      <div class="ds">lint · tsc · טסטים · regex · imports אסורים · staged-path · גלאי־השמטות. קודי־יציאה.</div>
       <div class="mech">node scripts/validate.mjs --target admin</div>
-      <div class="branch">🔴 אדום → סבב תיקון; לא ממשיכים עד ירוק.</div>
+      <div class="branch">🔴 אדום → עד 2 סבבי תיקון → עדיין → <code>ai-blocked</code> + STOP.</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--green)">
+    <div class="node" data-detail="d6" style="--c:var(--green)">
       <div class="num">6</div>
-      <div class="hd"><span class="ico">🔬</span> Gate B — סקפטי בהקשר נקי</div>
-      <div class="ds">מעבר נפרד על ה־<b>diff בלבד</b> (<code>git diff main...HEAD</code>) — code-review + security-review. לא ראה את ההנמקה של המבצע. (6c: אם נגעת ב־routes/Actions → סנכרון הרשאות AAA דרך up-aaa-sync.)</div>
-      <div class="branch">🔴 CRITICAL/HIGH לא נפתר → סבב תיקון 1 → עדיין → <b>ai-blocked</b> + STOP.</div>
+      <div class="hd"><span class="ico">🔬</span> Gate B — סקפטי טרי <span class="more">פרטים ›</span></div>
+      <div class="ds">מעבר נפרד על ה־diff בלבד: code-review + security-review. (+6c: סנכרון הרשאות AAA אם נגעת ב־routes.)</div>
+      <div class="branch">🔴 CRITICAL/HIGH לא נפתר → סבב 1 → עדיין → <code>ai-blocked</code> + STOP.</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--accent)">
+    <div class="node" data-detail="d7" style="--c:var(--accent)">
       <div class="num">7</div>
-      <div class="hd"><span class="ico">🚀</span> Close — Draft PR</div>
-      <div class="ds">דוחף ענף, פותח <b>Draft PR</b> עם ה־reviewers מה־config. גוף ה־PR כולל: spec, סיכום Gate A, ממצאי Gate B, שורות router-miss, וסעיף הרשאות AAA אם רלוונטי.</div>
+      <div class="hd"><span class="ico">🚀</span> Close — Draft PR <span class="more">פרטים ›</span></div>
+      <div class="ds">דוחף ענף, פותח <b>Draft PR</b> עם reviewers מה־config; גוף ה־PR כולל spec / Gate A / Gate B / router-miss / AAA.</div>
       <div class="mech">gh pr create --draft --reviewer &lt;defaults&gt;</div>
     </div>
     <div class="arrow"></div>
 
-    <div class="node" style="--c:var(--accent)">
+    <div class="node" data-detail="d8" style="--c:var(--accent)">
       <div class="num">8</div>
-      <div class="hd"><span class="ico">📋</span> Jira → Waiting for CR</div>
-      <div class="ds">מעביר את הטיקט לעמודת <b>Waiting for CR</b>, מוסיף תגובה עם כתובת ה־PR, ו־<b>@mention</b> ל־QA שיתחיל בדיקות. זה המצב הסופי של הסוכן.</div>
+      <div class="hd"><span class="ico">📋</span> Jira → Waiting for CR <span class="more">פרטים ›</span></div>
+      <div class="ds">מעביר את הטיקט ל־<b>Waiting for CR</b>, מוסיף תגובה עם כתובת ה־PR ו־@mention ל־QA. המצב הסופי של הסוכן.</div>
       <div class="mech">transitionJiraIssue → "Waiting for CR" · addComment (PR URL + @QA)</div>
     </div>
 
-    <div class="loopback">↻ חזרה לשלב 0 ב־tick הבא — לוקח את הטיקט הבא בתור (טיקט אחד בכל ריצה).</div>
+    <div class="loopback">↻ חזרה לשלב 0 ב־tick הבא — טיקט אחד בכל ריצה.</div>
 
     <div class="human">
       <div class="hd"><span class="ico">👤</span> שער אנושי קבוע — <b>מחוץ ללולאה</b></div>
-      <div class="ds">בן־אדם סוקר את ה־PR וממזג. <b>זה אף פעם לא אוטומטי</b> — גם כשהסוכן יהיה ״סניור״. (גם מפתח סניור עובר code-review ולא דוחף ל־main.)</div>
+      <div class="ds">בן־אדם סוקר את ה־PR וממזג. אף פעם לא אוטומטי — גם כשהסוכן יהיה ״סניור״ (גם סניור עובר code-review ולא דוחף ל־main).</div>
     </div>
 
-    <div class="never">הסוכן <b>לעולם לא</b>: ממזג PR · מסמן draft כ־ready · מעביר Jira מעבר ל־Waiting for CR · דוחף ל־<code>main</code>/<code>v*</code> · מתייג <code>ai-ready</code> בעצמו · נוגע בטיקט שלא משויך אליך.</div>
+    <div class="never">הסוכן <b>לעולם לא</b>: ממזג PR · מסמן draft כ־ready · מעביר Jira מעבר ל־Waiting for CR · דוחף ל־<code>main</code>/<code>v*</code> · force-push · מתייג <code>ai-ready</code> בעצמו · נוגע בטיקט שלא משויך אליך.</div>
 
   </div>
 </div>
+
+<!-- modal -->
+<div id="modal"><div class="sheet"><button id="modalClose">✕</button><div id="modalBody"></div></div></div>
+
+<!-- hidden detail blocks (grounded 1:1 in prompts/triage.md) -->
+<div id="details" style="display:none">
+
+  <div id="d0">
+    <h2>⏰ 0 · הערה (wake) + בריאות</h2>
+    <div class="lead">איך הסוכן מתחיל ריצה — מתוזמן או ידני, מקומי בלבד.</div>
+    <h3>הטריגר</h3>
+    <ul>
+      <li><b>מתוזמן:</b> Windows Task Scheduler מפעיל את <code>triage-loop.ps1</code> כל פרק זמן.</li>
+      <li><b>ידני / <code>/loop</code>:</b> אותו דבר, מופעל ביד.</li>
+      <li><b>נעילת single-instance:</b> קובץ-נעילה ב־<code>%TEMP%</code>; אם נעילה מוחזקת (פחות מ־90 דק') — ה־tick יוצא מיד. נעילה ישנה (stale) נלקחת מחדש. <b>סשן אינטראקטיבי קודם</b> לאוטומטי.</li>
+    </ul>
+    <div class="mech">triage-loop.ps1  (lock)
+  → run-headless.ps1  (--permission-mode acceptEdits, --allowedTools, --max-turns 60)
+    → claude -p  &lt;prompts/triage.md&gt;</div>
+    <h3>שלב 0 — בריאות</h3>
+    <ul><li>קורא ל־<code>atlassianUserInfo</code>. אם נכשל (auth פג) → עוצר מיד.</li></ul>
+    <div class="stop"><b>STOP TRIAGE-HALT: jira-auth</b> — לא עושה כלום נוסף.</div>
+  </div>
+
+  <div id="d1">
+    <h2>🔎 1 · Poll — בחירת טיקט אחד</h2>
+    <div class="lead">שולף מ־Jira עם <code>searchJiraIssuesUsingJql</code>. רק מה שמשויך אליך.</div>
+    <div class="mech">project = UNP
+  AND assignee = currentUser()
+  AND labels = ai-ready
+  AND labels != ai-needs-info
+  AND status = "To Do"
+ORDER BY priority</div>
+    <ul>
+      <li><b><code>assignee = currentUser()</code> לא מתפשר</b> — טיקט שהוא <code>ai-ready</code> אבל משויך למישהו אחר <b>לעולם</b> לא יופיע ולא ייגע.</li>
+      <li>לוקח את הטיקט הראשון (לפי priority). קורא לו TICKET.</li>
+      <li>לפני כל פעולה — מאמת שוב ש־<code>TICKET.assignee == current user</code>.</li>
+    </ul>
+    <div class="stop">אין תוצאות → <b>TRIAGE-IDLE</b> ועוצר. assignee לא אתה → <b>TRIAGE-HALT: not-my-ticket</b>.</div>
+  </div>
+
+  <div id="d2">
+    <h2>✅ 2 · Readiness checklist — כולן חובה</h2>
+    <div class="lead">קורא את הטיקט המלא ובודק בסדר. כל כשל = לא כותבים קוד.</div>
+    <ol>
+      <li><b>repo onboarded</b> — <code>config/targets.json</code> ל־admin עם <code>onboarded: true</code>. אחרת → halt.</li>
+      <li><b>Acceptance criteria / תיאור</b> לא ריק.</li>
+      <li><b>Estimate</b> קיים. אם &gt; 4 שעות <b>או</b> נתיב רגיש-אבטחה (webhook, WS, auth, <code>app.ts</code>) → דורש label <code>plan-approved</code>.</li>
+      <li><b>QA assignee</b> מוגדר (מ־<code>~/.claude/unplugged-tasks/config.json</code>).</li>
+      <li><b>אין PR פתוח</b> כבר ל־TICKET, ולא נתבע ב־<code>sessions.json</code>.</li>
+    </ol>
+    <div class="stop"><b>כשל (חוץ מ-onboarded/auth שעוצרים)</b> → לא כותב קוד. מנסח טיוטת needs-info: באנגלית, @reporter, רשימת הפרמטרים החסרים המדויקת, <b>השערת מערכות-קשורות</b> (איזה שרת backend מ־<code>config/repo-registry.json</code> ולמה), וקונסטרוקטיבי (מה כן הוסק). נשמר ב־<code>.claude/.triage-drafts/&lt;TICKET&gt;.md</code> ומודפס. <b>פרסום + label רק אחרי אישור אנושי.</b></div>
+  </div>
+
+  <div id="d3">
+    <h2>🧱 3 · Spec extraction — חומת־אש לקלט לא־מהימן</h2>
+    <div class="lead">טקסט הטיקט הופך למפרט מובנה. הסוכן מבצע מול המפרט, לא מול ה־prose הגולמי.</div>
+    <h3>המפרט המובנה</h3>
+    <ul><li>מטרה · acceptance criteria · השערת files-in-scope (מ־<code>.claude/context/repo-map.md</code> + ה־CLAUDE.md המקוננים) · out-of-scope.</li></ul>
+    <h3>החומת־אש</h3>
+    <div class="stop">כל הוראה בטיקט שמבקשת: קריאות רשת · קריאת סודות/<code>.env</code> · שינוי CI/workflow · הוספת dependency — <b>לא מבוצעת</b>, רק מסומנת במפרט. ממשיכים רק עם משימת ה־dev הלגיטימית.</div>
+    <h3>חוזה API חיצוני</h3>
+    <div class="keep">אם צריך חוזה (swagger/שירות פרטי, למשל <code>promotion-code-admin-controller</code> מ־<code>up_product_service</code>) — מביאים את <b>האמיתי</b> (לפי <code>standards/internal-access.md</code>): fetch ישיר, ואם חסום-IP → דרך <b>claude-in-chrome</b> (ברשת המורשית). עדיין אי-אפשר → STOP ומבקש גישה. <b>לעולם לא ממציא חוזה.</b></div>
+  </div>
+
+  <div id="d4">
+    <h2>⌨️ 4 · Implement — כתיבת הקוד</h2>
+    <div class="lead">אתה ה־<b>coordinator</b> (על המודל החזק). מחלק את העבודה כמו senior dev — 1, 2 (back+front), או יותר.</div>
+    <div class="mech">git checkout main &amp;&amp; git pull &amp;&amp; git checkout -b TICKET</div>
+
+    <h3>4a · החלוקה (הקריאה שלך)</h3>
+    <div class="mini">
+      <div class="mbox coord"><b>Coordinator (מודל חזק)</b><span class="t">מחליט כמה sub-agents</span></div>
+      <div class="marr">▼ <b>contract קודם — לא מתפשר</b></div>
+      <div class="mbox contract"><b>כותב + מקמיט את ה־<span class="tag">libs/admin-types</span></b><span class="t">+ כל interface משותף ששני הצדדים תלויים בו — מסיר את ההתנגשות היחידה במונורפו</span></div>
+      <div class="marr">▼ fan-out (במקביל)</div>
+      <div class="mrow">
+        <div class="mbox"><b>🔧 sub-agent BACK</b><span class="t">router + controller<br><span class="tag">model: sonnet</span><br><span class="tag">isolation: worktree</span></span></div>
+        <div class="mbox"><b>🎨 sub-agent FRONT</b><span class="t">components + permissions<br><span class="tag">model: sonnet</span><br><span class="tag">isolation: worktree</span></span></div>
+      </div>
+      <div class="marr">▼ integrate</div>
+      <div class="mbox integrate"><b>ממזג את ה־worktrees חזרה לענף TICKET</b><span class="t">פותר קונפליקטים → ממשיך לשערים על התוצאה המאוחדת</span></div>
+    </div>
+    <ul>
+      <li><b>למה contract קודם:</b> זה מסיר את ההתנגשות האמיתית היחידה במונורפו (שני sub-agents נוגעים ב־<code>libs/admin-types</code>).</li>
+      <li><b>למה Sonnet ל-subs:</b> חיסכון — ה־coordinator נשאר על המודל החזק; ה־subs מבצעים מול brief ברור. כל אחד עם הנחיות מדויקות + files-in-scope + שמות ה-skills.</li>
+      <li><b>למה worktree:</b> sub-agents מקבילים לא מתנגשים על הדיסק (כל אחד בעותק git משלו).</li>
+      <li>טיקט קטן / משטח יחיד → מדלגים על החלוקה, עושים לבד.</li>
+    </ul>
+
+    <h3>4b · הכתיבה</h3>
+    <ul>
+      <li>עריכת קובץ מפעילה את <b>route-on-touch</b> שמזריק את ה-skill הנכון — מיישמים אותו.</li>
+      <li>קוד + טסטים <b>ביחד</b>. staging מפורש: <code>git add &lt;files&gt;</code> — <b>אף פעם לא <code>git add -A</code></b>.</li>
+      <li>commit: <code>&lt;type&gt;(&lt;scope&gt;): &lt;desc&gt; (TICKET)</code>.</li>
+      <li>עבודת UI/עיצוב → <code>standards/design.md</code> + ה-skill <b>admin-design</b> (טוקנים מ-AAA): מתאימים לקיים, לא ממציאים look חד-פעמי.</li>
+    </ul>
+  </div>
+
+  <div id="d5">
+    <h2>🛡️ 5 · Gate A — מכני (אי-אפשר להתווכח)</h2>
+    <div class="lead">סקריפט מריץ בדיקות שמחזירות קודי-יציאה. ה-validator לא שופט — הוא מודד.</div>
+    <div class="mech">node scripts/validate.mjs --target admin</div>
+    <h3>מה נבדק (מ־<code>config/targets.json</code>)</h3>
+    <ul>
+      <li><b>lint</b> — <code>nx affected -t lint</code></li>
+      <li><b>typecheck</b> — <code>tsc -b</code> (backend/client/types)</li>
+      <li><b>test</b> — <code>nx affected -t test</code></li>
+      <li><b>branch regex</b> — <code>^UNP-\d+$</code> · <b>commit regex</b> — conventional + (UNP-NNNN)</li>
+      <li><b>forbidden imports</b> — client לא מייבא runtime של <code>@admin-backend</code> (רק <code>import type</code>)</li>
+      <li><b>staged-path guard</b> · <b>גלאי-השמטות</b> — route ללא controller/types ⇒ אזהרה</li>
+    </ul>
+    <div class="stop">🔴 RED → עד <b>2 סבבי תיקון</b>. עדיין אדום → דוחף ענף, label <code>ai-blocked</code>, מגיב בטיקט, <b>STOP TRIAGE-BLOCKED: gate-a</b>.</div>
+  </div>
+
+  <div id="d6">
+    <h2>🔬 6 · Gate B — סקפטי בהקשר נקי</h2>
+    <div class="lead">מעבר נפרד שרואה רק את ה-diff — אף פעם לא ראה את ההנמקה של המבצע. אפיסטמולוגיה שונה בכוונה.</div>
+    <div class="mech">git diff main...HEAD  →  /code-review + /security-review</div>
+    <ul><li>מפרט ממצאים כ-checkboxes.</li></ul>
+    <div class="stop">CRITICAL/HIGH שלא נפתר → <b>סבב תיקון 1</b> → עדיין → דוחף, <code>ai-blocked</code>, מגיב, <b>STOP TRIAGE-BLOCKED: gate-b</b>.</div>
+    <h3>6c · הרשאות AAA (אם נגעת ב־routes / Actions / RequirePermission)</h3>
+    <div class="keep">פיצ'ר מגודר לא שמיש עד שההרשאות קיימות ב-AAA DB. דרך ה-MCP <b>up-aaa-sync</b>: <code>scan_routes</code> (preview) → <code>sync_actions</code> (<code>dryRun</code> ואז אמיתי) → <code>assignActionToPolicy</code>. שמות לפי ה-routes, לא מומצאים. אי-אפשר להגיע ל-DB → לא מדלגים בשקט: רושמים ב-PR+טיקט מה צריך סנכרון ולאיזו policy.</div>
+  </div>
+
+  <div id="d7">
+    <h2>🚀 7 · Close — Draft PR</h2>
+    <div class="lead">המצב הסופי של הסוכן: תמיד <b>draft</b>, אף פעם לא merge.</div>
+    <div class="mech">gh pr create --draft --title "&lt;conventional title&gt; (TICKET)" --body-file &lt;tmp&gt; --reviewer &lt;defaults&gt;</div>
+    <ul>
+      <li><b>Reviewers</b> = ה-<code>defaultSelected</code> מ-<code>~/.claude/unplugged-tasks/config.json</code>, נקראים דינמית — אף פעם לא שמות מקודדים.</li>
+    </ul>
+    <h3>גוף ה-PR חייב לכלול</h3>
+    <ul>
+      <li>ה-spec brief</li>
+      <li>סיכום Gate A</li>
+      <li>ממצאי Gate B</li>
+      <li>שורות <code>router-miss</code> מ-<code>.claude/.router-miss.log</code></li>
+      <li>הוראות-טיקט שסומנו ולא בוצעו</li>
+      <li>סעיף <b>AAA permissions</b> (חובה אם gating/routes השתנו): האקשנים החדשים, ה-routes שהם מגדרים, אם סונכרנו, ולאיזו policy צריך להעניק.</li>
+    </ul>
+  </div>
+
+  <div id="d8">
+    <h2>📋 8 · Jira → Waiting for CR</h2>
+    <div class="lead">העברת הטיקט והודעה ל-QA. המצב הסופי — ואז הלולאה חוזרת לשלב 0.</div>
+    <div class="mech">transitionJiraIssue  TICKET → "Waiting for CR"   (לבד)
+addCommentToJiraIssue  (PR URL + @mention QA)</div>
+    <ul>
+      <li>מעבירים את הטיקט ל-<b>Waiting for CR</b> (טרנזישנים רצים לבד).</li>
+      <li>תגובה עם כתובת ה-PR + <b>@mention</b> ל-QA שיתחיל בדיקות. חוזרים על סעיף ה-AAA בתגובה כדי שהסוקר/QA ידע מה להעניק.</li>
+      <li>מוסיפים את TICKET ל-<code>sessions.json</code> עם prUrl + timestamp.</li>
+      <li>מדפיסים <code>TRIAGE-DONE: &lt;PR url&gt;</code>.</li>
+    </ul>
+    <div class="keep">↻ ה-tick הבא לוקח את הטיקט הבא בתור. 👤 המיזוג נשאר אנושי, מחוץ ללולאה.</div>
+  </div>
+
+</div>
+
+<script>
+  var modal=document.getElementById('modal');
+  var body=document.getElementById('modalBody');
+  function openDetail(id){var d=document.getElementById(id); if(!d)return; body.innerHTML=d.innerHTML; modal.classList.add('open');}
+  function closeDetail(){modal.classList.remove('open');}
+  var nodes=document.querySelectorAll('.node[data-detail]');
+  for(var i=0;i<nodes.length;i++){ (function(n){ n.addEventListener('click',function(){openDetail(n.getAttribute('data-detail'));}); })(nodes[i]); }
+  modal.addEventListener('click',function(e){ if(e.target===modal) closeDetail(); });
+  document.getElementById('modalClose').addEventListener('click',closeDetail);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeDetail(); });
+</script>
 </body>
 </html>
