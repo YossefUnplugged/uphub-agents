@@ -102,18 +102,19 @@ const PAGES = [
 /* ---------- START ---------- */
 {id:"home",group:"התחלה",ico:"🏠",title:"ברוך הבא — מה המקום הזה",lead:"מדריך בעברית לכל מה שתכננּו: מערכת הסוכנים שתקבל משימות ותכתוב קוד לפי הסטנדרטים שלכם.",
 html:`
-<div class="box why"><span class="bt">בקצרה — מה עשינו בשיחה הזו</span>
-בנינו <b>תכנון מלא</b> (לא קוד עדיין) למערכת שבה סוכן AI מקבל טיקט מ־Jira, כותב קוד לפי החוקים של Unplugged, מריץ בדיקות, פותח Pull Request ומעדכן את Jira — <b>הכול רץ אך ורק על המחשב שלך</b>. התכנון מתועד ב־16 קבצים ב־Obsidian, והאתר הזה מסביר כל אחד מהם בעברית.</div>
+<div class="box why"><span class="bt">בקצרה — מה זה</span>
+מערכת שבה סוכן AI מקבל טיקט מ־Jira, כותב קוד לפי החוקים של Unplugged, מריץ בדיקות, פותח Pull Request ומעדכן את Jira — <b>הכול רץ אך ורק על המחשב שלך</b>. כבר לא רק תכנון: ה־Phase-0 (השלד הדטרמיניסטי) <b>בנוי</b> — validator, 11 skills, route-on-touch, סקריפטי sync/harvest. מקור־האמת הוא הריפו <code>uphub-agents</code> (התיקייה <code>docs/architecture/</code> שאתה רואה כאן). האתר הזה מסביר כל חלק בעברית.</div>
 
 <h3>איך משתמשים באתר</h3>
-<p>בצד ימin יש עץ ניווט — בדיוק כמו ב־Obsidian. לוחצים על קובץ → מקבלים הסבר בעברית: מה הקובץ, מה התפקיד שלו, ולמה הוא חשוב כדי שהסוכן יהיה <b>דטרמיניסטי</b> (כלומר: יוציא כל פעם את אותו קוד צפוי, ולא ניחושים).</p>
+<p>בצד ימין יש עץ ניווט — בדיוק כמו ב־Obsidian. לוחצים על קובץ → מקבלים הסבר בעברית: מה הקובץ, מה התפקיד שלו, ולמה הוא חשוב כדי שהסוכן יהיה <b>דטרמיניסטי</b> (כלומר: יוציא כל פעם את אותו קוד צפוי, ולא ניחושים).</p>
 
 <p>מומלץ להתחיל לפי הסדר:</p>
 <div class="toc-cards">
   <div class="toc-card" data-go="why"><div class="t">1 · למה בכלל ארכיטקטורה?</div><div class="d">הרעיון המרכזי — למה לא מספיק "פרומפט טוב"</div></div>
   <div class="toc-card" data-go="layers"><div class="t">2 · 4 השכבות</div><div class="d">השיטה שמכריחה את ה־AI לעבוד מדויק</div></div>
-  <div class="toc-card" data-go="map"><div class="t">3 · מפת הקבצים</div><div class="d">איך 16 הקבצים מתחברים</div></div>
-  <div class="toc-card" data-go="changes"><div class="t">4 · מה שיניתי לבקשתך</div><div class="d">מקומי בלבד + הסרת עברית מהקבצים</div></div>
+  <div class="toc-card" data-go="llmwiki"><div class="t">3 · השיטה של Karpathy</div><div class="d">התיעוד כ־wiki שהמודל מתחזק (Ingest/Lint)</div></div>
+  <div class="toc-card" data-go="map"><div class="t">4 · מפת הקבצים</div><div class="d">איך כל ההערות מתחברות</div></div>
+  <div class="toc-card" data-go="changes2"><div class="t">5 · מה שינינו עכשיו</div><div class="d">admin-design · uphub · אימוץ llm-wiki</div></div>
 </div>
 
 <div class="box det"><span class="bt">למה זה שווה את ההשקעה</span>
@@ -167,28 +168,61 @@ html:`
 <p>במקום פרומפט אחד גדול ומבולגן, יש הרבה skills קטנים, כל אחד למשימה הנדסית אחת: עיצוב tRPC, בניית קומפוננטה, ניהול state, טסטים. ה־L2 הוא ה"נתב" שמחליט איזה skill להפעיל. ההסבר על הניתוב: ${X('p06','קובץ 06 — Skill Routing')}.</p>
 `},
 
-{id:"map",group:"התחלה",ico:"🗺️",title:"מפת הקבצים — איך הכול מתחבר",lead:"16 קבצי תכנון + ה־canvas החזותי. ככה הם נחלקים.",
+{id:"llmwiki",group:"התחלה",ico:"🧠",title:"השיטה של Karpathy — llm-wiki",lead:"איך התיעוד הזה עובד: לא ערימת הערות, אלא wiki שהמודל עצמו מתחזק ומשאיר עקבי — artifact ידע מקומפל.",
 html:`
-<p>כל הקבצים יושבים ב־<code>docs/agent-ecosystem/</code> בתוך ה־vault של ה־plugin. שלוש קבוצות:</p>
+<p>אנדריי קרפתי תיאר דפוס (<code>llm-wiki</code>): במקום RAG שמושך מסמכים גולמיים בכל שאלה, ה־<b>LLM מתחזק wiki מקושר ב־markdown</b> שמצטבר ומשתפר עם הזמן — <b>artifact ידע מקומפל</b>, לא נגזר מאפס כל פעם. אימצנו את התת-קבוצה שמתאימה ל־design record.</p>
 
-<h3>📘 מסמכי התכנון (00–10)</h3>
+<h3>שלושת הרכיבים</h3>
+<table>
+<tr><th>רכיב ב־llm-wiki</th><th>אצלנו (הקובץ)</th></tr>
+<tr><td><b>Schema</b> — חוקי המבנה</td><td><code>_SCHEMA.md</code> — סוגי הערות, frontmatter חובה, קונבנציות לינקים/שמות</td></tr>
+<tr><td><b>Index</b> — נקודת כניסה</td><td>ה־hub <code>uphub - Agent Overview</code> (reading order + status dashboard)</td></tr>
+<tr><td><b>Log</b> — יומן כרונולוגי</td><td>ה־<b>ADRs</b> (החלטות 001→006) + היסטוריית git</td></tr>
+</table>
+
+<h3>שלוש הפעולות</h3>
+<table>
+<tr><th>פעולה</th><th>מה היא, אצלנו</th></tr>
+<tr><td><b>Ingest</b></td><td>עובדה/החלטה חדשה → לשלב אותה <b>לתוך</b> הדף שמחזיק את הרעיון, לעדכן backlinks + ה־hub, להוסיף ADR אם זו החלטה, לבמפ frontmatter. נוהל: ה־skill <code>maintaining-the-architecture-wiki</code>.</td></tr>
+<tr><td><b>Lint</b></td><td><code>node scripts/lint-docs.mjs</code> — בדיקה מכנית: לינקים שבורים, frontmatter חסר, הערות יתומות, פערי־hub. <code>exit 1</code> על שגיאה. כמו Gate A — אבל לתיעוד.</td></tr>
+<tr><td><b>Query</b> (מותאם)</td><td>עונים מה־wiki; מתייקים תשובה כדף <b>רק</b> אם זו ידע־עיצוב עמיד — לא דף לכל שאלה (מונע bloat).</td></tr>
+</table>
+
+<div class="box det"><span class="bt">התובנה הגדולה — אנחנו מריצים את אותו דפוס פעמיים</span>
+ה־wiki הזה הוא ה־<b>קריא־לאדם</b>. אבל אותו דפוס בדיוק מריץ את <b>קונטקסט הסוכן</b> (4 השכבות): <code>harvest-context</code> = <b>Ingest</b> (סורק את הריפו → L3/L4), <span class="k">route-on-touch</span> = <b>Query/הזרקה</b> just-in-time, ו־<code>router-miss</code> + Gate A = <b>Lint</b>. כלומר כבר יישמנו את רוב ה־pattern — עכשיו גם על התיעוד, עם השמות הנכונים.</div>
+
+<div class="box warn"><span class="bt">מה במכוון לא אימצנו</span>
+<b>Query-auto-file</b> (דף חדש לכל תשובה) — ב־design record מאוצר זה רק bloat. וגם לא <b>Log</b> נפרד — ה־ADRs כבר ממלאים את התפקיד.</div>
+
+<p class="tip">החוקים המלאים: ${X('p00','ה־hub')} מקשר ל־<code>_SCHEMA.md</code>. הניתוב (ה־Query של צד הסוכן): ${X('p06','קובץ 06')}.</p>
+`},
+
+{id:"map",group:"התחלה",ico:"🗺️",title:"מפת הקבצים — איך הכול מתחבר",lead:"12 הערות תכנון (00–11) + ADRs + ה־canvas החזותי. ככה הם נחלקים.",
+html:`
+<p>כל הקבצים יושבים ב־<code>docs/architecture/</code> בריפו <code>uphub-agents</code> (מקור־האמת). פותחים את התיקייה כ־vault ב־Obsidian. ארבע קבוצות:</p>
+
+<h3>📘 מסמכי התכנון (00–11)</h3>
 <table>
 <tr><th>קובץ</th><th>מה יש בו</th></tr>
-<tr><td>uphub — Agent Overview</td><td>מפת-על + לוח מצב. נקודת הכניסה.</td></tr>
+<tr><td>uphub — Agent Overview</td><td>מפת-על + לוח מצב. נקודת הכניסה (ה־Index).</td></tr>
 <tr><td>01 Vision</td><td>המטרה (ג'וניור אוטונומי) + שיטת 4 השכבות.</td></tr>
 <tr><td>02 Current State</td><td>מה קיים היום + ניתוח הפערים.</td></tr>
 <tr><td>03 Target Architecture</td><td>הצינור המלא: קליטה → ביצוע → סגירה.</td></tr>
 <tr><td>04 Agent Roster</td><td>כל סוכן/skill/סקריפט: תפקיד, טריגר, גבולות.</td></tr>
 <tr><td>05 Context Layers</td><td>איפה כל שכבה גרה כקובץ + ניתוח ה־gitignore.</td></tr>
-<tr><td>06 Skill Routing</td><td>ניתוב דטרמיניסטי + תוכנית איחוד כפילויות.</td></tr>
+<tr><td>06 Skill Routing</td><td>route-on-touch (בנוי) + מקור־אמת יחיד.</td></tr>
 <tr><td>07 Remote Execution</td><td>אוטומציה מקומית (בתחום) + מחקר remote (רפרנס).</td></tr>
 <tr><td>08 Security Model</td><td>קלט לא־מהימן, הגנות פלטפורמה.</td></tr>
 <tr><td>09 Roadmap</td><td>שלבים, סדר בנייה, שער היציאה (benchmark).</td></tr>
 <tr><td>10 Ecosystem Map</td><td>עם מי admin מדבר + מפת הריפואים בארגון.</td></tr>
+<tr><td>11 Profiles &amp; Niches</td><td>CORE מול NICHE — איך אותו מנוע משוכפל לריפו חדש (Java/Android).</td></tr>
 </table>
 
+<h3>⚙️ ה־schema של ה־vault</h3>
+<p><code>_SCHEMA.md</code> — החוקים שמאפשרים למודל לתחזק את ה־wiki דטרמיניסטית (סוגי הערות, frontmatter, ה־Ingest/Lint). ראה ${X('llmwiki','השיטה של Karpathy')}.</p>
+
 <h3>🎯 ההחלטות (ADRs)</h3>
-<p>שש החלטות ארכיטקטוניות מתועדות — כל אחת מסבירה <b>למה</b> בחרנו כך ולא אחרת, כדי שלא נפתח ויכוח סגור מחדש. ${X('adr1','עבור ל־ADRs')}.</p>
+<p>שש החלטות ארכיטקטוניות מתועדות (ה־Log הכרונולוגי) — כל אחת מסבירה <b>למה</b> בחרנו כך ולא אחרת, כדי שלא נפתח ויכוח סגור מחדש. ${X('adr1','עבור ל־ADRs')}.</p>
 
 <h3>🖼️ Pipeline Map.canvas</h3>
 <p>תרשים חזותי ב־Obsidian Canvas — פותחים אותו ב־Obsidian ורואים את כל הצינור בתמונה אחת.</p>
@@ -208,7 +242,7 @@ html:`
 <ul>
   <li><b>סדר קריאה</b> — 01 עד 10, מסומן במפורש, כך שמודל חדש יודע מאיפה להתחיל.</li>
   <li><b>חוק הסמכות</b> — המסמכים הם אמת של <b>זמן-תכנון</b>. ברגע שמשהו נבנה, האמת עוברת לקבצים בריפו עצמו (<code>admin/.claude/**</code>). אם מסמך וקוד מתנגשים — <b>הקוד מנצח</b>.</li>
-  <li><b>לוח המצב</b> — תמונת מצב מהירה: כרגע רוב הרכיבים במצב "לבנות", והחוסם הראשון הוא A1 (לפתוח את ה־gitignore).</li>
+  <li><b>לוח המצב</b> — תמונת מצב מהירה: Phase-0 <b>בנוי</b> (validator, 11 skills, route-on-touch, sync/harvest). החוסם הישן A1 (gitignore) <b>מת</b> — עברנו לריפו עצמאי <code>uphub-agents</code> שמסונכרן ל־<code>admin/.claude/</code>. נשאר: ה־clean-profile smoke test.</li>
 </ul>
 
 <div class="box det"><span class="bt">תרומה לדטרמיניזם</span>
@@ -216,7 +250,7 @@ html:`
 `},
 
 {id:"p01",group:"מסמכי התכנון",ico:"🎯",title:"01 Vision and Methodology",lead:"לאן אנחנו חותרים, ואיך שיטת 4 השכבות מתרגמת לכלים של Claude Code.",
-path:"docs/agent-ecosystem/01 Vision and Methodology.md",
+path:"docs/architecture/01 Vision and Methodology.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 מגדיר את ה"כוכב הצפון" — <b>מפתח זוטר אוטונומי שרץ על המחשב שלך</b>: טיקט נכנס, קוד תקני יוצא, PR נפתח, Jira מתעדכן. ומגדיר 3 קריטריונים מדידים ל"הצלחה".</div>
@@ -236,7 +270,7 @@ html:`
 `},
 
 {id:"p02",group:"מסמכי התכנון",ico:"📋",title:"02 Current State",lead:"תמונת מצב כנה: מה כבר עובד, ואיפה הפערים האמיתיים.",
-path:"docs/agent-ecosystem/02 Current State.md",
+path:"docs/architecture/02 Current State.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 מתעד את שלושת הנכסים הקיימים ומנתח את הפערים מול 4 השכבות. בלי זה, היינו מתכננים באוויר.</div>
@@ -256,7 +290,7 @@ html:`
 `},
 
 {id:"p03",group:"מסמכי התכנון",ico:"🏗️",title:"03 Target Architecture",lead:"הצינור המלא בשלושה שלבים — וההחלטות המבניות שמאחוריו.",
-path:"docs/agent-ecosystem/03 Target Architecture.md",
+path:"docs/architecture/03 Target Architecture.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 מצייר את הצינור המלא: <b>קליטה → ביצוע → סגירה</b>, עם תרשים ASCII, וזרימת נתונים מלאה של טיקט בודד מהתחלה ועד הסוף.</div>
@@ -284,7 +318,7 @@ html:`
 `},
 
 {id:"p04",group:"מסמכי התכנון",ico:"🤖",title:"04 Agent Roster",lead:"הרשימה המלאה: מה נשאר, מה נבנה, מה נחתך. פחות סוכנים, יותר חדים.",
-path:"docs/agent-ecosystem/04 Agent Roster.md",
+path:"docs/architecture/04 Agent Roster.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 המפרט המדויק של כל רכיב — תפקיד, טריגר, קלט/פלט, גבולות (guardrails). זה הקובץ שממנו בונים בפועל.</div>
@@ -310,7 +344,7 @@ html:`
 `},
 
 {id:"p05",group:"מסמכי התכנון",ico:"📚",title:"05 Context Layers",lead:"איפה בדיוק כל שכבה גרה כקובץ — והניתוח של חוסם ה־gitignore.",
-path:"docs/agent-ecosystem/05 Context Layers.md",
+path:"docs/architecture/05 Context Layers.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 טבלת המיקום: לכל אחת מ־4 השכבות, איזה קובץ, איפה, ומי כותב אותו (יד אנושית או נוצר אוטומטית). זו תוכנית ההנדסה של ההקשר.</div>
@@ -329,7 +363,7 @@ html:`
 `},
 
 {id:"p06",group:"מסמכי התכנון",ico:"🧭",title:"06 Skill Routing",lead:"איך בוחרים את ה־skill הנכון — בלי ניחוש — ותוכנית מחיקת הכפילויות.",
-path:"docs/agent-ecosystem/06 Skill Routing.md",
+path:"docs/architecture/06 Skill Routing.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 מגדיר את מנגנון הניתוב הדטרמיניסטי, ואת מפת מקור-האמת היחיד (לאן כל חוק שייך).</div>
@@ -357,7 +391,7 @@ html:`
 `},
 
 {id:"p07",group:"מסמכי התכנון",ico:"⚙️",title:"07 Remote Execution",lead:"החלטה: הכול מקומי. שאר הקובץ — מחקר remote ששמור כרפרנס בלבד.",
-path:"docs/agent-ecosystem/07 Remote Execution.md",
+path:"docs/architecture/07 Remote Execution.md",
 html:`
 <div class="box warn"><span class="bt">ההחלטה שלך (ADR-006)</span>
 הסוכן רץ <b>אך ורק על המחשב שלך, בכל שלב</b>. אין GitHub Actions, אין cloud, אין סוכן ב־CI. כל החלק של remote בקובץ סומן מפורשות כ<b>"רפרנס בלבד — לא עבודה מתוכננת"</b>.</div>
@@ -380,7 +414,7 @@ html:`
 `},
 
 {id:"p08",group:"מסמכי התכנון",ico:"🔒",title:"08 Security Model",lead:"טקסט של טיקט הוא קלט לא־מהימן שמניע סוכן עם הרשאות. כל הגנה חייבת להיות ברמת פלטפורמה.",
-path:"docs/agent-ecosystem/08 Security Model.md",
+path:"docs/architecture/08 Security Model.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 מודל האיומים. הקו המנחה: <b>פרומפט הוא UX, פלטפורמה היא אבטחה.</b> "אל תדחוף ל־main" שמוגדר רק בפרומפט = fail-open. אותו fail-open שתיקנתם ב־UNP-8041.</div>
@@ -398,7 +432,7 @@ html:`
 `},
 
 {id:"p09",group:"מסמכי התכנון",ico:"🛣️",title:"09 Roadmap",lead:"שלושה שלבים, סדר בנייה, ושער היציאה שאי אפשר לרמות.",
-path:"docs/agent-ecosystem/09 Roadmap.md",
+path:"docs/architecture/09 Roadmap.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 תוכנית הבנייה בפועל: מה לאמת קודם, באיזה סדר לבנות, וכמה מאמץ (S/M/L) לכל משימה.</div>
@@ -420,7 +454,7 @@ html:`
 `},
 
 {id:"p10",group:"מסמכי התכנון",ico:"🌐",title:"10 Ecosystem Map",lead:"עם מי admin מדבר באמת, ואיזה ריפואים בארגון יכולים לקבל משימות.",
-path:"docs/agent-ecosystem/10 Ecosystem Map.md",
+path:"docs/architecture/10 Ecosystem Map.md",
 html:`
 <div class="box role"><span class="bt">התפקיד</span>
 הקובץ שנולד מהשאלה שלך — "איך אני יודע שמשימת Java תעבוד?". ממפה כל אינטגרציה של admin (מאומת מהקוד) + את כל ~100 הריפואים בארגון לפי שפה.</div>
@@ -449,7 +483,7 @@ html:`
 
 /* ---------- ADRs ---------- */
 {id:"adr1",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-001 — הריפו מעל ה־plugin",lead:"הקשר קריטי-לביצוע נכנס לריפו, לא נשאר ב־plugin על מכונה אחת.",
-path:"docs/agent-ecosystem/decisions/ADR-001 Repo Over Plugin.md",
+path:"docs/architecture/decisions/ADR-001 Repo Over Plugin.md",
 html:`
 <div class="box role"><span class="bt">ההחלטה</span>
 כל מה שקריטי לביצוע (4 השכבות, חוקים, skills, validator) עובר ל־<code>admin/.claude/**</code> ב־git. ה־plugin יורד לתפקיד "קונסולת מפעיל" (UX אינטראקטיבי, Figma, צלילים).</div>
@@ -460,7 +494,7 @@ html:`
 `},
 
 {id:"adr2",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-002 — ניתוב לפי נגיעה",lead:"בחירת skill קורית כשנוגעים בקובץ, לא לפי תכנון מראש.",
-path:"docs/agent-ecosystem/decisions/ADR-002 Route On Touch.md",
+path:"docs/architecture/decisions/ADR-002 Route On Touch.md",
 html:`
 <div class="box role"><span class="bt">ההחלטה</span>
 3 מנגנונים: hook שמזריק skill לפי הקובץ הנערך + צ'קליסט דק לתכנון + גלאי השמטות ב־validator. תוויות טיקט אף פעם לא קובעות ניתוב.</div>
@@ -470,7 +504,7 @@ html:`
 `},
 
 {id:"adr3",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-003 — אוטונומיה עד Draft PR",lead:"מצב סופי תמיד Draft PR. אכיפה ברמת פלטפורמה.",
-path:"docs/agent-ecosystem/decisions/ADR-003 Draft PR Autonomy.md",
+path:"docs/architecture/decisions/ADR-003 Draft PR Autonomy.md",
 html:`
 <div class="box role"><span class="bt">ההחלטה</span>
 המצב הסופי של הסוכן הוא תמיד <b>Draft PR + Jira → Waiting for CR</b>. אף פעם לא merge, לא דחיפה ל־main, לא מעבר Jira מעבר ל־CR. לכל חוק-פרומפט יש "תאום פלטפורמה" (branch protection, וכו').</div>
@@ -480,7 +514,7 @@ html:`
 `},
 
 {id:"adr4",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-004 — מבצע יחיד + שערים",lead:"מבצע אחד + שערים מכניים. צוות 5 נשאר מקומי כאופציה.",
-path:"docs/agent-ecosystem/decisions/ADR-004 Single Agent Remote.md",
+path:"docs/architecture/decisions/ADR-004 Single Agent Remote.md",
 html:`
 <div class="box role"><span class="bt">ההחלטה</span>
 בנתיב האוטונומי: מבצע <b>אחד</b> שכותב קוד+טסטים ביחד, ואז שער A (validator מכני) + שער B (מבקר בהקשר נקי על ה־diff בלבד). הצוות של 5 שורד מקומית כאופציה לטיקטים גדולים.</div>
@@ -490,7 +524,7 @@ html:`
 `},
 
 {id:"adr5",group:"ההחלטות (ADRs)",ico:"📜",title:"ADR-005 — Polling במקום Dispatch",lead:"סקירת Jira מתוזמנת, לא PAT של GitHub שיושב בתוך Jira.",
-path:"docs/agent-ecosystem/decisions/ADR-005 Polling Over Dispatch.md",
+path:"docs/architecture/decisions/ADR-005 Polling Over Dispatch.md",
 html:`
 <div class="box role"><span class="bt">ההחלטה</span>
 משימה מתוזמנת סורקת Jira (JQL) עם טוקן Jira; כתיבה ל־GitHub דרך הרשאות מקומיות. לא PAT של GitHub ששמור בתוך Jira Automation.</div>
@@ -501,7 +535,7 @@ html:`
 `},
 
 {id:"adr6",group:"ההחלטות (ADRs)",ico:"⭐",title:"ADR-006 — ביצוע מקומי בלבד",lead:"ההחלטה החדשה שלך: הסוכן רץ אך ורק על המחשב שלך, בכל שלב.",
-path:"docs/agent-ecosystem/decisions/ADR-006 Local Only Execution.md",
+path:"docs/architecture/decisions/ADR-006 Local Only Execution.md",
 html:`
 <div class="box role"><span class="bt">ההחלטה (שלך, 2026-06-11)</span>
 כל שלבי הצינור — קליטה, ביצוע, שערים, סגירה — רצים על המחשב שלך, בסשן אינטראקטיבי או בריצה מתוזמנת headless (<code>Task Scheduler → claude -p</code>). אין סוכני GitHub Actions, אין cloud, אין סוכן ב־CI.</div>
@@ -540,6 +574,24 @@ html:`
 
 <h3>קודם בשיחה — מיפוי האקו-סיסטם</h3>
 <p>נוסף <b>קובץ 10</b> + guardrail "repo onboarded" אחרי שהעלית את שאלת ה־Java.</p>
+`},
+
+{id:"changes2",group:"עזר",ico:"🆕",title:"מה שינינו עכשיו (הסשן הזה)",lead:"מהתכנון אל הבנוי — מה נוסף/השתנה בארכיטקטורה בסשן הזה, לפי הסדר.",
+html:`
+<h3>1 · design-system אמיתי — <code>admin-design</code></h3>
+<p>נבנה skill עיצוב שמחולץ <b>1:1 מה־UI של ה־AAA/administration</b> בפרודקשן (לא המצאה): טוקנים (Poppins, <code>#495dc5</code>), כפתורים, אינפוטים, טבלת DataGrid, דיאלוגים, חיפוש — עם קובץ <code>component-recipes.md</code> שמצטט מקור לכל בלוק. ה־route-on-touch מזריק אותו אוטומטית כשנוגעים ב־<code>*Styles.ts</code>. מסך הקופונים יושר 1:1 ל־AAA ונדחף.</p>
+
+<h3>2 · מקור־האמת = הריפו, וה־hub קיבל שם</h3>
+<p>הוכרע: <code>docs/architecture/</code> בריפו הוא הקנוני (Obsidian פותח אותו כ־vault — אין עותק שני). הצומת המרכזי בגרף שונה מ־<code>00 Home</code> הגנרי ל־<b><code>uphub - Agent Overview</code></b>, וכל ה־backlinks/README/canvas עודכנו.</p>
+
+<h3>3 · יישוב התיעוד למציאות הבנויה (Lint ידני)</h3>
+<p><code>06 Skill Routing</code> + <code>ADR-002</code> תוארו לפי התכנון המקורי; תוקנו לקוד הבנוי — שמות הקבצים האמיתיים (<code>routing.json</code>, <code>route-on-touch.mjs</code>), שזה מזריק <b>hint</b> ולא את גוף ה־skill, והוסרה אזהרת "hooks לא רצים ב־GHA" (מיותרת — מקומי). גם ה־<code>uphub - Agent Overview</code> כבר לא סותר את עצמו.</p>
+
+<h3>4 · אימוץ ה־llm-wiki של Karpathy</h3>
+<p>הפכנו את ה־vault ל<b>מתחזק־את־עצמו</b>: <code>_SCHEMA.md</code> (החוקים), <code>scripts/lint-docs.mjs</code> (בדיקה מכנית, רץ 0/0), ו־skill <code>maintaining-the-architecture-wiki</code> (נוהל ה־Ingest). ${X('llmwiki','ההסבר המלא')}.</p>
+
+<div class="box det"><span class="bt">החוט המקשר</span>
+כל ארבעת השינויים הם אותו עיקרון: <b>אל תיתן למודל להמציא — תן לו מקור־אמת אחד, מעוגן, ונאכף</b>. עיצוב מחולץ מפרודקשן, תיעוד שמיושב לקוד, ו־wiki שנבדק ב־Lint — כולם "shrink its world" על התיעוד עצמו.</div>
 `},
 
 {id:"cli",group:"עזר",ico:"⌨️",title:"מילון CLI — מונחים שמבלבלים",lead:"הסבר קצר בעברית למונחים שחוזרים. אם משהו ב־CLI לא ברור — חפש אותו כאן.",
@@ -587,7 +639,7 @@ A1 (פתיחת gitignore) הוא החוסם של <b>כל</b> השאר — בלי
 const groups=[...new Set(PAGES.map(p=>p.group))];
 const sb=document.getElementById('sidebar');
 const main=document.getElementById('main');
-sb.innerHTML=`<h1>🧩 מערכת הסוכנים</h1><div class="sub">מדריך עברית · Unplugged · תכנון 2026-06-11</div>`+
+sb.innerHTML=`<h1>🧩 מערכת הסוכנים</h1><div class="sub">מדריך עברית · Unplugged · Phase-0 בנוי · 2026-06-18</div>`+
   groups.map(g=>`<div class="group-title">${g}</div>`+
     PAGES.filter(p=>p.group===g).map(p=>
       `<div class="nav-item" data-id="${p.id}"><span class="ico">${p.ico}</span><span>${p.title}</span></div>`
