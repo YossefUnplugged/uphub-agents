@@ -30,6 +30,8 @@ Decisions live in [[decisions/ADR-001 Repo Over Plugin|decisions/]] — read an 
 
 Visual overview: [[Pipeline Map.canvas|Pipeline Map]]
 
+How this vault is maintained: [[_SCHEMA]] — the structure + the Ingest/Lint operations (llm-wiki pattern). Run `node scripts/lint-docs.mjs` after edits.
+
 ## Status dashboard
 
 | Component | Stage | Status | Effort | Note |
