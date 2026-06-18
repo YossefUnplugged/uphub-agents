@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מושגים — איך יודעים שהסוכן עובד טוב</title>
+<style>
+  :root{
+    --bg:#1e1e22; --bg2:#26262b; --bg3:#2f2f36; --line:#3a3a42;
+    --txt:#e8e8ea; --dim:#a0a0aa; --accent:#d97757; --accent2:#7aa2f7;
+    --green:#86c995; --red:#e06c75; --yellow:#e5c07b; --purple:#c678dd;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:"Segoe UI","Assistant","Heebo",Arial,sans-serif;background:radial-gradient(1200px 600px at 50% -200px,#2a2a33,var(--bg));color:var(--txt);line-height:1.75;padding:42px 20px 90px}
+  .wrap{max-width:780px;margin:0 auto}
+  h1{font-size:28px;text-align:center;margin-bottom:6px}
+  .sub{text-align:center;color:var(--dim);font-size:15px;margin-bottom:26px}
+  code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-family:Consolas,monospace;font-size:.85em;color:var(--accent);direction:ltr;display:inline-block}
+  .toc{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:30px}
+  .toc b{display:block;margin-bottom:8px;color:var(--accent2)}
+  .toc a{display:inline-block;color:var(--txt);text-decoration:none;border:1px solid var(--line);border-radius:20px;padding:4px 13px;margin:4px 4px 0 0;font-size:13px;transition:.12s}
+  .toc a:hover{border-color:var(--accent);color:var(--accent)}
+
+  .card{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:20px;border-inline-start:4px solid var(--c,var(--accent2));scroll-margin-top:20px}
+  .card h2{font-size:21px;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+  .card h2 .n{background:var(--c,var(--accent2));color:#15151a;font-size:13px;font-weight:700;border-radius:50%;width:25px;height:25px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .card .row{margin-top:12px}
+  .card .lbl{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+  .simple{font-size:15px}
+  .analogy{background:#15151a;border:1px dashed var(--line);border-radius:9px;padding:11px 14px;font-size:14px;color:#d7d7db}
+  .analogy .e{font-size:17px;margin-inline-end:6px}
+  .ours{font-size:14px;color:var(--dim)}
+  .ours b{color:var(--txt)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:right;vertical-align:top}
+  th{background:var(--bg3)}
+  .pass{color:var(--green);font-weight:700}.fail{color:var(--red);font-weight:700}
+  .big{background:linear-gradient(120deg,#2a2440,#26262b);border:1px solid var(--purple);border-radius:14px;padding:20px 24px;margin:28px 0}
+  .big h2{color:var(--purple)}
+  .ladder li{margin-bottom:7px}
+  .done{color:var(--green)}.todo{color:var(--yellow)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎓 איך יודעים שהסוכן עובד טוב?</h1>
+  <div class="sub">כל המושגים שזרקנו — בעברית פשוטה, עם אנלוגיה אחת לכל אחד.</div>
+
+  <div class="toc"><b>המושגים פה:</b>
+    <a href="#det">דטרמיניזם</a><a href="#gate">שער (Gate)</a><a href="#gatea">Gate A מכני</a><a href="#gateb">Gate B סקפטי</a><a href="#bench">Benchmark</a><a href="#gt">Ground truth</a><a href="#rubric">Rubric</a><a href="#clean">פרופיל נקי</a><a href="#disc">Discrimination check</a><a href="#now">מה עשינו עכשיו</a>
+  </div>
+
+  <div class="card" id="det" style="--c:var(--accent2)">
+    <h2><span class="n">1</span> דטרמיניזם</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">שאותה משימה תיתן כל פעם <b>אותה תוצאה צפויה וטובה</b> — לא ניחוש שונה כל פעם. זו כל המטרה של המערכת.</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">👨‍🍳</span> <b>מתכון לעומת אילתור.</b> טבח שמאלתר מוציא כל פעם משהו אחר. מתכון מדויק (כמויות, סדר, זמנים) מוציא את אותה מנה — גם אם טבח אחר מבשל. אנחנו כותבים לסוכן "מתכון", לא נותנים לו לאלתר.</div></div>
+    <div class="row"><div class="lbl">אצלנו</div><div class="ours">מצמצמים את "העולם" של הסוכן (הכלים, הידע, ההקשר) עד שטווח הפלטים צר וצפוי. <b>פחות חופש לנחש = יותר דטרמיניזם.</b></div></div>
+  </div>
+
+  <div class="card" id="gate" style="--c:var(--yellow)">
+    <h2><span class="n">2</span> שער (Gate)</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">נקודת בדיקה שהקוד <b>חייב לעבור</b> לפני שממשיכים. אם נכשל — עוצרים. יש לנו שני סוגים.</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">🛂</span> <b>ביקורת דרכונים בשדה תעופה.</b> לא משנה כמה תסביר — אם המסמך לא תקין, לא עוברים. השער לא מתרשם, הוא בודק.</div></div>
+    <div class="row"><div class="lbl">אצלנו</div><div class="ours">הסוכן <b>לא שופט את עצמו</b>. שערים חיצוניים בודקים אותו אחרי שכתב. שניהם בהמשך ↓</div></div>
+  </div>
+
+  <div class="card" id="gatea" style="--c:var(--green)">
+    <h2><span class="n">3</span> Gate A — שער מכני</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">סקריפט שמריץ בדיקות אוטומטיות שמחזירות <b>"עבר / נכשל"</b> בלי דעה: האם הקוד מתקמפל? ה-lint נקי? הטסטים עוברים? שם הענף תקין?</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">✅</span> <b>בדיקת איות / קומפיילר.</b> אין לו "אולי" — או שיש שגיאה או שאין. אי-אפשר להתווכח עם <code>tsc</code> שנכשל.</div></div>
+    <div class="row"><div class="lbl">אצלנו</div><div class="ours"><code>validate.mjs</code> — מריץ lint, typecheck, טסטים, regex של שם-ענף/commit, ובדיקת imports אסורים. מחזיר <b>קוד-יציאה</b> (0=עבר). כבר תפס באמת באג אמיתי.</div></div>
+  </div>
+
+  <div class="card" id="gateb" style="--c:var(--green)">
+    <h2><span class="n">4</span> Gate B — שער סקפטי (הקשר נקי)</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">סקירת קוד שנייה — אבל ע"י "מבקר" ש<b>לא ראה איך הקוד נכתב</b>, רק את התוצאה (ה-diff). ככה אי-אפשר "לשכנע" אותו.</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">👀</span> <b>קורא-הגהה טרי.</b> מי שכתב מאמר כבר "עיוור" לטעויות שלו. עיניים חדשות שלא ראו את התהליך תופסות מה שהכותב פספס.</div></div>
+    <div class="row"><div class="lbl">אצלנו</div><div class="ours">מעבר נפרד שמריץ <code>/code-review</code> + <code>/security-review</code> (built-ins של Claude) על ה-diff בלבד. בעיה חמורה שלא נפתרה → חוסם את ה-PR.</div></div>
+  </div>
+
+  <div class="card" id="bench" style="--c:var(--accent)">
+    <h2><span class="n">5</span> Benchmark (מבחן חוזר)</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">לוקחים טיקטים <b>ישנים</b> שכבר נפתרו ומוזגו, נותנים לסוכן לפתור אותם <b>מחדש</b>, ובודקים אם יצא דומה+תקין. ככה מודדים "האם הוא באמת טוב" על מקרים אמיתיים.</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">🚗</span> <b>טסט נהיגה במסלול ידוע.</b> הבוחן יודע איך נראית נהיגה נכונה במסלול הזה, אז הוא יכול לדעת אם נכשלת. מסלול חדש לגמרי = אי-אפשר לדעת.</div></div>
+    <div class="row"><div class="lbl">אצלנו</div><div class="ours"><code>benchmark/run.mjs</code> + 2 מקרים אמיתיים (UNP-6436, UNP-6841). <b>שער היציאה:</b> ≥80% מהריצות עוברות בלי תיקון אנושי — אחרת לא ממשיכים לשלב הבא.</div></div>
+  </div>
+
+  <div class="card" id="gt" style="--c:var(--accent)">
+    <h2><span class="n">6</span> Ground truth (אמת-יסוד)</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">ה<b>תשובה הנכונה הידועה</b> שאליה משווים — ה-PR האמיתי שמתכנת אנושי כתב ומיזגו. אנחנו יודעים שהוא נכון, אז הוא "סרגל המדידה".</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">🔑</span> <b>דף-תשובות של מבחן.</b> בלי דף-תשובות אי-אפשר לדעת אם הנבחן צדק. ה-PR הישן הוא דף-התשובות.</div></div>
+    <div class="row"><div class="lbl">אצלנו</div><div class="ours">לכל מקרה ב-benchmark שמור מספר ה-PR שמוזג. שולפים את הקבצים שהוא שינה (דרך <code>gh</code>) ומשווים מולם.</div></div>
+  </div>
+
+  <div class="card" id="rubric" style="--c:var(--accent)">
+    <h2><span class="n">7</span> Rubric (מחוון / דף-ציונים)</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">רשימת הקריטריונים שלפיהם נותנים ציון לריצה. כדי <b>לעבור</b>: Gate A ירוק <b>וגם</b> ציון ≥ 4 מתוך 5, ובלי להפר אף קריטריון "קשיח" (HARD).</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">📋</span> <b>טופס בדיקה של בוחן.</b> לא "הרגשתי שזה טוב" — אלא 5 משבצות מסומנות, וכלל ברור מתי עוברים.</div></div>
+    <div class="row"><div class="lbl">חמשת הקריטריונים אצלנו</div>
+      <table>
+        <tr><th>#</th><th>בודק</th><th>קשיח?</th></tr>
+        <tr><td>1</td><td>Gate A ירוק</td><td class="fail">HARD</td></tr>
+        <tr><td>2</td><td>נגע בקבצים הנכונים (≥70% חפיפה עם ה-PR האמיתי)</td><td>לא</td></tr>
+        <tr><td>3</td><td>כיבד טיפוסים משותפים (לא שכפל type מקומית)</td><td class="fail">HARD (כשרלוונטי)</td></tr>
+        <tr><td>4</td><td>קונבנציות קוד</td><td>לא</td></tr>
+        <tr><td>5</td><td>אין scope creep (לא נגע במה שלא צריך)</td><td>לא</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="clean" style="--c:var(--yellow)">
+    <h2><span class="n">8</span> פרופיל נקי (clean profile)</h2>
+    <div class="row"><div class="lbl">בפשטות</div><div class="simple">להריץ את הסוכן על התקנת Claude <b>בלי שום plugin אישי</b> — כך שההקשר היחיד שיש לו הוא מה שמסונכרן לריפו (<code>.claude/</code>). זה מוכיח שהאיכות לא תלויה במכונה אחת מיוחדת.</div></div>
+    <div class="row"><div class="lbl">אנלוגיה</div><div class="analogy"><span class="e">🏎️</span> <b>בדיקת רכב בלי שדרוגים.</b> אם תבדוק עם כל ה"מודים" של המוסך שלך, לא תדע אם הרכב טוב או שהמוסך מפצה. בודקים את הרכב הסטנדרטי — ככה כל אחד מקבל אותו דבר.</div></div>
+    <div class="row"><div class="lbl">אצלנו</div><div class="ours">זה ה-<b>smoke test</b> שעוד לא רץ (Level 3). אם סוכן נקי + ההקשר מהריפו מוציא קוד תקין — הוכחנו שהדטרמיניזם אמיתי ולא "קסם מקומי".</div></div>
+  </div>
+
+  <div class="big" id="disc">
+    <h2>🔬 9 · Discrimination check — "בודקים את הבוחן"</h2>
+    <p style="margin:8px 0 12px"><b>בפשטות:</b> לפני שסומכים על ה-rubric שייתן ציונים לסוכן — בודקים שה-rubric עצמו לא עיוור. נותנים לו תשובה <b>נכונה ידועה</b> ותשובה <b>שגויה בכוונה</b>, ובודקים שהוא נותן להן ציונים שונים. אם שתיהן מקבלות "עבר" — המחוון חסר ערך ("תיאטרון").</p>
+    <div class="analogy" style="border-color:var(--purple)"><span class="e">🎯</span> <b>כיול מאזניים.</b> לפני ששוקלים תכשיט, שמים משקולת ידועה של 100 גרם. אם המאזניים מראים 100 — אפשר לסמוך עליהם. זה מה שעשינו ל-rubric.</div>
+  </div>
+
+  <div class="card" id="now" style="--c:var(--purple)">
+    <h2><span class="n">✓</span> מה עשינו עכשיו (UNP-6841)</h2>
+    <div class="row"><div class="simple">לקחנו טיקט ישן (PR #60, תיקון באג חיפוש ב-Store) ו<b>בידיים</b>, לא בהרצה, ניקדנו שני פתרונות מול המחוון:</div></div>
+    <table>
+      <tr><th>פתרון</th><th>תוצאה</th><th>למה</th></tr>
+      <tr><td><b>א — האמיתי שמוזג</b></td><td class="pass">PASS</td><td>Gate A ירוק + נגע בקבצים הנכונים + בלי scope creep (5/5)</td></tr>
+      <tr><td><b>ב — שגוי שהמצאתי</b></td><td class="fail">FAIL</td><td>ייבא runtime אסור מה-backend → Gate A אדום (קריטריון HARD), ופספס את קובץ ה-backend</td></tr>
+    </table>
+    <div class="row"><div class="ours">✅ המחוון <b>הבחין</b> נכון מול שגוי — ועל בסיס בדיקה <b>מכנית</b>, לא תחושה. <b>מסקנה:</b> ה-benchmark לא תיאטרון, אפשר לסמוך עליו.</div></div>
+    <div class="row"><div class="lbl">איפה זה בסולם</div>
+      <ul class="ladder" style="padding-inline-start:20px;margin-top:6px">
+        <li class="done">✅ Level 0 — lint של התיעוד</li>
+        <li class="done">✅ Level 1 — benchmark dry-run (החיווט תקין)</li>
+        <li class="done">✅ Level 2 — discrimination check (המחוון מבחין) ← <b>פה היינו עכשיו</b></li>
+        <li class="todo">⏳ Level 3 — ההרצה החיה על פרופיל נקי (אצלך)</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
