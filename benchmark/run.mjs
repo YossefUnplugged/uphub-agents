@@ -62,8 +62,12 @@ for (const c of cases) {
     // LIVE (clean-profile only): sketch — implement, gate, score
     try {
         execSync(`git checkout ${c.baseRef}`, { cwd: target.path, stdio: "pipe" });
-        execSync(`git checkout -b bench/${c.key}`, { cwd: target.path, stdio: "pipe" });
-        execSync(`claude -p ${JSON.stringify("Branch is bench/" + c.key + ". Implement: " + c.prompt)} --permission-mode acceptEdits`, { cwd: target.path, stdio: "inherit" });
+        try { execSync(`git branch -D ${c.key}`, { cwd: target.path, stdio: "pipe" }); } catch { /* no prior branch */ }
+        // Branch == ticket id so it passes the validator's `^UNP-\d+$` gate (a `bench/` prefix would fail Gate A spuriously).
+        execSync(`git checkout -b ${c.key}`, { cwd: target.path, stdio: "pipe" });
+        // The implementer MUST commit, or `git diff ${baseRef}...HEAD` sees nothing (0% recall) and Gate A's commit-regex fails.
+        const prompt = `You are on branch ${c.key} (base ${c.baseRef}) in the ${targetName} repo. Implement this ticket:\n\n${c.prompt}\n\nWhen done: stage ONLY the files you changed (\`git add <files>\`, never \`-A\`) and make ONE commit with a Conventional-Commits subject ending in (${c.key}) — e.g. \`fix(store): resolve search loading bug (${c.key})\`.`;
+        execSync(`claude -p ${JSON.stringify(prompt)} --permission-mode acceptEdits`, { cwd: target.path, stdio: "inherit" });
         const gateA = (() => { try { execSync(`node "${join(REPO_ROOT, "scripts", "validate.mjs")}" --target ${targetName}`, { stdio: "pipe" }); return true; } catch { return false; } })();
         const changed = execSync(`git diff --name-only ${c.baseRef}...HEAD`, { cwd: target.path, encoding: "utf8" }).split("\n").filter(Boolean);
         const overlap = changed.filter(f => gtFiles.includes(f)).length;
