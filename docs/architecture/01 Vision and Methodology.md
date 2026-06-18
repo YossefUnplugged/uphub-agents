@@ -1,16 +1,22 @@
 ---
 tags: [agent-ecosystem, vision, methodology]
 status: stable
-updated: 2026-06-11
+updated: 2026-06-18
 ---
 
 # 01 Vision and Methodology
 
-> **TL;DR:** The goal — an autonomous junior developer running on the owner's machine: ticket in, standards-compliant code out, draft PR opened, Jira updated. Determinism comes from context layers + machine gates, not from bigger prompts.
+> **TL;DR:** The goal — an autonomous **senior**-level engineer running on the owner's machine: ticket in, standards-compliant code out, draft PR opened, Jira updated. It operates at a *junior* level **today** (narrow world, heavy gates) — but the north-star is **senior mastery**, not a junior running rote actions forever. Determinism comes from context layers + machine gates, not from bigger prompts.
 
-## The north star: an autonomous junior developer (on the owner's machine)
+## The north star: an autonomous senior engineer (on the owner's machine)
 
 A Jira ticket labeled ready → an agent **running locally, only on the owner's machine** ([[decisions/ADR-006 Local Only Execution]]) checks out a branch named `UNP-NNNN` → implements following team conventions → tests/lint/typecheck pass → a **draft PR** opens with the right reviewers → Jira moves to *Waiting for CR* and QA is mentioned. A human always reviews and merges. The agent's terminal state is **always a draft PR — never a merge**.
+
+### Junior today, senior as the destination
+
+Right now the agent is deliberately **junior**: a small world, mechanical gates, and a human merge on every PR — training wheels while it earns trust. The vision is **not** to keep it doing rote, narrowly-supervised tasks forever. It is to grow it into a **senior**: an agent that understands the whole codebase and the cross-cutting consequences of a change, makes the right architectural call without being told, and *plays the whole instrument* — owns any ticket across the stack, end-to-end, with mastery.
+
+**What grows is capability, not the safety envelope.** The draft-PR terminal state and the permanent human merge are *not* junior training wheels — a senior human engineer is still code-reviewed and still cannot push to `main`. Those gates stay. What changes as the agent matures is the **breadth and ambiguity** of tickets it can own, the **depth** of architectural judgement it brings, and how rarely a reviewer needs to send it back. Senior = trusted with more, not gated less.
 
 ### Success criteria ("done" is observable, not vibes)
 
