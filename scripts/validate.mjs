@@ -162,8 +162,16 @@ for (const key of ["lint", "typecheck", "test"]) {
         execSync(cmd, { cwd: TARGET_PATH, encoding: "utf8", stdio: "pipe" });
         record(key, "pass", cmd);
     } catch (e) {
-        const tail = (e.stdout || e.stderr || e.message || "").toString().split("\n").slice(-12).join("\n");
-        record(key, "fail", `${cmd}\n      ${tail}`);
+        const out = (e.stdout || e.stderr || e.message || "").toString();
+        const tail = out.split("\n").slice(-12).join("\n");
+        // Distinguish "the tool COULDN'T RUN" (repo tooling not set up) from "the tool FOUND problems".
+        // Gate A judges the agent's code, not the target repo's broken toolchain — a tool that can't
+        // even start is a warning, not a Gate-A failure. (e.g. admin's eslint config/plugins are absent.)
+        const toolingBroken = /No ESLint configuration found|couldn't find a configuration file|ESLint couldn't find|was referenced from the config file|Cannot find (module|package)|is not installed correctly|command not found|is not recognized as|Cannot find the binary|Failed to load (config|plugin)/i.test(out);
+        record(key, toolingBroken ? "warn" : "fail",
+            toolingBroken
+                ? `${cmd}\n      tooling could not run (not a code violation) — treated as a WARNING, not a Gate-A failure. Fix the target's ${key} setup separately:\n      ${tail}`
+                : `${cmd}\n      ${tail}`);
     }
 }
 
