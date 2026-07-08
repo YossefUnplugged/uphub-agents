@@ -18,7 +18,9 @@ path still needs (P0 #2, #3) — here they are proven with zero risk:
 ## The sandbox
 `training/sandbox-seed/` is a tiny **dependency-free** Node ESM project (no `npm install`): a `mathUtils`
 module, a `node --test` suite, and stand-in `typecheck`/`lint` tools. `setup-sandbox.mjs` copies it to
-`training/.sandbox/` (gitignored) and `git init`s it with a baseline that has **one deliberate bug**.
+`training/.sandbox/` (gitignored) and `git init`s it with two bases: **`main`** is clean (all tests
+green — the base for T2/T3) and **`bug-subtract`** has a deliberate `subtract` bug (red tests — the base
+for T1), so a feature/negative-control task isn't dragged red by an unrelated pre-existing bug.
 
 ## Tasks (`training/tasks/*.json`)
 | id | kind | what it checks |

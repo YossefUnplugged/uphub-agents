@@ -8,7 +8,7 @@
  *   node training/setup-sandbox.mjs --force    # wipe and rebuild
  */
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, rmSync } from "node:fs";
+import { cpSync, existsSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,8 +30,20 @@ sh("git init -b main", SANDBOX);
 sh('git config user.email "training-bot@uphub.local"', SANDBOX);
 sh('git config user.name "uphub training bot"', SANDBOX);
 sh("git add -A", SANDBOX);
-sh('git commit -m "chore: training sandbox baseline (deliberate subtract bug)"', SANDBOX);
+sh('git commit -m "chore: training sandbox baseline (clean — all tests pass)"', SANDBOX);
 
-console.log(`✓ sandbox ready at ${SANDBOX} (branch main, baseline committed)`);
-console.log("  baseline is INTENTIONALLY failing `node --test` (subtract bug) — that is task T1's target.");
-console.log("  next: node training/run-training.mjs --task T1-fix-subtract");
+// Task-specific base branch for T1: a committed state where subtract is broken. T1 branches off
+// THIS, so its `node --test` starts red and the agent's job is to make it green. main stays clean,
+// so T2 (add a feature) and T3 (nothing-to-do) start from a green baseline and aren't dragged red
+// by an unrelated pre-existing bug.
+sh("git checkout -b bug-subtract", SANDBOX);
+const mathPath = join(SANDBOX, "src", "mathUtils.mjs");
+writeFileSync(mathPath, readFileSync(mathPath, "utf8").replace("return a - b;", "return a + b;"));
+sh("git add src/mathUtils.mjs", SANDBOX);
+sh('git commit -m "chore: seed subtract bug for task T1 (do not fix on main)"', SANDBOX);
+sh("git checkout main", SANDBOX);
+
+console.log(`✓ sandbox ready at ${SANDBOX}`);
+console.log("  main         — clean baseline, `node --test` GREEN (base for T2 feature + T3 negative-control)");
+console.log("  bug-subtract — subtract broken, `node --test` RED (base for T1 bug-fix)");
+console.log("  next: node training/run-training.mjs --all");

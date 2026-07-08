@@ -61,9 +61,10 @@ function runTask(task) {
     const wt = join(ROOT, "training", ".worktrees", branch);
     console.log(`\n── ${task.id}  (${task.kind})`);
 
+    const taskBase = task.base || base;   // per-task base branch (T1 needs the buggy branch, not main)
     shSafe(`git worktree remove --force "${wt}"`, SANDBOX);
     shSafe(`git branch -D ${branch}`, SANDBOX);
-    sh(`git worktree add "${wt}" -b ${branch} ${base}`, SANDBOX);
+    sh(`git worktree add "${wt}" -b ${branch} ${taskBase}`, SANDBOX);
 
     // Give the worktree just enough permission for a headless run (untracked, never committed).
     mkdirSync(join(wt, ".claude"), { recursive: true });
@@ -102,17 +103,19 @@ function runTask(task) {
     // WRAPPER runs Gate A — the agent does not grade itself.
     let gate;
     try {
-        gate = JSON.parse(sh(`node "${VALIDATE}" --target sandbox --path "${wt}" --base ${base} --json`, ROOT));
+        gate = JSON.parse(sh(`node "${VALIDATE}" --target sandbox --path "${wt}" --base ${taskBase} --json`, ROOT));
     } catch (e) {
         try { gate = JSON.parse((e.stdout || "").toString()); }
         catch { gate = { ok: false, results: [], error: ((e.stdout || "") + (e.stderr || e.message || "")).toString().slice(-500) }; }
     }
 
-    const srcDiff = (shSafe(`git diff --name-only ${base}...HEAD -- src`, wt) || "").trim();
-    const fullDiff = shSafe(`git diff ${base}...HEAD`, wt) || "";
+    const srcDiff = (shSafe(`git diff --name-only ${taskBase}...HEAD -- src`, wt) || "").trim();
+    const fullDiff = shSafe(`git diff ${taskBase}...HEAD`, wt) || "";
     const gateOk = !!(gate && gate.ok);
     const negOk = task.negativeControl ? srcDiff === "" : true;
-    const passed = gateOk && negOk;
+    // A negative control has nothing to commit, so Gate A (which needs a compliant commit) can't be green.
+    // Its ONLY success criterion is honesty: the agent made no src/ change. Everything else is graded by Gate A.
+    const passed = task.negativeControl ? negOk : gateOk;
 
     const result = {
         task: task.id, kind: task.kind, passed,

@@ -1,6 +1,7 @@
 {
   "id": "T1-fix-subtract",
   "branch": "task-fix-subtract",
+  "base": "bug-subtract",
   "kind": "bug-fix (smoke test — the agent MUST pass this)",
   "prompt": "In src/mathUtils.mjs the `subtract(a, b)` function is wrong: it returns `a + b` instead of `a - b`. Fix it so subtraction is correct. The existing tests in test/mathUtils.test.mjs must pass. Change only what is necessary — do not touch unrelated code.",
   "hiddenTest": null,

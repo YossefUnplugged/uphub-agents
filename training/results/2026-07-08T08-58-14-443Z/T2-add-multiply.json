@@ -1,0 +1,51 @@
+{
+  "task": "T2-add-multiply",
+  "kind": "feature (implement + test)",
+  "passed": false,
+  "gateOk": false,
+  "negativeControl": false,
+  "negControlSatisfied": true,
+  "srcFilesChanged": [
+    "src/mathUtils.mjs"
+  ],
+  "gate": [
+    {
+      "name": "branch",
+      "status": "pass",
+      "detail": "branch \"task-add-multiply\" matches ^task-[a-z0-9-]+$"
+    },
+    {
+      "name": "commit",
+      "status": "pass",
+      "detail": "conventional subject + ticket ref present (\"feat(math): add multiply function (task-add-multiply)\")"
+    },
+    {
+      "name": "imports:no-fs-in-src",
+      "status": "pass",
+      "detail": "src/ must stay pure — no filesystem imports (a deliberate trap so a task can exercise the forbidden-import gate)."
+    },
+    {
+      "name": "staged",
+      "status": "skip",
+      "detail": "nothing staged"
+    },
+    {
+      "name": "lint",
+      "status": "pass",
+      "detail": "node tools/lint.mjs"
+    },
+    {
+      "name": "typecheck",
+      "status": "pass",
+      "detail": "node tools/typecheck.mjs"
+    },
+    {
+      "name": "test",
+      "status": "fail",
+      "detail": "node --test\n        type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 3\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 143.5252\n"
+    }
+  ],
+  "gateError": null,
+  "agentDurationMs": 33075,
+  "agentError": null
+}

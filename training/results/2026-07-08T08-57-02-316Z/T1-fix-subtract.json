@@ -1,0 +1,51 @@
+{
+  "task": "T1-fix-subtract",
+  "kind": "bug-fix (smoke test — the agent MUST pass this)",
+  "passed": true,
+  "gateOk": true,
+  "negativeControl": false,
+  "negControlSatisfied": true,
+  "srcFilesChanged": [
+    "src/mathUtils.mjs"
+  ],
+  "gate": [
+    {
+      "name": "branch",
+      "status": "pass",
+      "detail": "branch \"task-fix-subtract\" matches ^task-[a-z0-9-]+$"
+    },
+    {
+      "name": "commit",
+      "status": "pass",
+      "detail": "conventional subject + ticket ref present (\"fix(math): correct subtract to return a - b (task-fix-subtract)\")"
+    },
+    {
+      "name": "imports:no-fs-in-src",
+      "status": "pass",
+      "detail": "src/ must stay pure — no filesystem imports (a deliberate trap so a task can exercise the forbidden-import gate)."
+    },
+    {
+      "name": "staged",
+      "status": "skip",
+      "detail": "nothing staged"
+    },
+    {
+      "name": "lint",
+      "status": "pass",
+      "detail": "node tools/lint.mjs"
+    },
+    {
+      "name": "typecheck",
+      "status": "pass",
+      "detail": "node tools/typecheck.mjs"
+    },
+    {
+      "name": "test",
+      "status": "pass",
+      "detail": "node --test"
+    }
+  ],
+  "gateError": null,
+  "agentDurationMs": 34058,
+  "agentError": null
+}

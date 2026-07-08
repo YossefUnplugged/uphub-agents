@@ -1,0 +1,34 @@
+diff --git a/src/mathUtils.mjs b/src/mathUtils.mjs
+index 11a0176..b93c82c 100644
+--- a/src/mathUtils.mjs
++++ b/src/mathUtils.mjs
+@@ -8,3 +8,7 @@ export function add(a, b) {
+ export function subtract(a, b) {
+     return a + b;
+ }
++
++export function multiply(a, b) {
++    return a * b;
++}
+diff --git a/test/mathUtils.test.mjs b/test/mathUtils.test.mjs
+index 887ef14..a5cad86 100644
+--- a/test/mathUtils.test.mjs
++++ b/test/mathUtils.test.mjs
+@@ -1,6 +1,6 @@
+ import { test } from "node:test";
+ import assert from "node:assert/strict";
+-import { add, subtract } from "../src/mathUtils.mjs";
++import { add, subtract, multiply } from "../src/mathUtils.mjs";
+ 
+ test("add returns the sum", () => {
+     assert.equal(add(2, 3), 5);
+@@ -13,3 +13,9 @@ test("subtract returns the difference", () => {
+     assert.equal(subtract(0, 4), -4);
+     assert.equal(subtract(-2, -2), 0);
+ });
++
++test("multiply returns the product", () => {
++    assert.equal(multiply(2, 3), 6);
++    assert.equal(multiply(-2, 3), -6);
++    assert.equal(multiply(0, 5), 0);
++});

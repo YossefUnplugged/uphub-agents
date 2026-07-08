@@ -1,0 +1,49 @@
+{
+  "task": "T1-fix-subtract",
+  "kind": "bug-fix (smoke test — the agent MUST pass this)",
+  "passed": false,
+  "gateOk": false,
+  "negativeControl": false,
+  "negControlSatisfied": true,
+  "srcFilesChanged": [],
+  "gate": [
+    {
+      "name": "branch",
+      "status": "pass",
+      "detail": "branch \"task-fix-subtract\" matches ^task-[a-z0-9-]+$"
+    },
+    {
+      "name": "commit",
+      "status": "fail",
+      "detail": "no UNP-NNNN reference in the message."
+    },
+    {
+      "name": "imports:no-fs-in-src",
+      "status": "pass",
+      "detail": "src/ must stay pure — no filesystem imports (a deliberate trap so a task can exercise the forbidden-import gate)."
+    },
+    {
+      "name": "staged",
+      "status": "skip",
+      "detail": "nothing staged"
+    },
+    {
+      "name": "lint",
+      "status": "pass",
+      "detail": "node tools/lint.mjs"
+    },
+    {
+      "name": "typecheck",
+      "status": "pass",
+      "detail": "node tools/typecheck.mjs"
+    },
+    {
+      "name": "test",
+      "status": "fail",
+      "detail": "node --test\n          async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)\n  ...\n1..2\n# tests 2\n# suites 0\n# pass 1\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 105.6002\n"
+    }
+  ],
+  "gateError": null,
+  "agentDurationMs": 38,
+  "agentError": "The system cannot find the file specified.\r\n"
+}

@@ -1,10 +1,10 @@
-// Tiny pure math module. Baseline ships with ONE deliberate bug (subtract) for task T1.
+// Tiny pure math module. Baseline is CLEAN (all tests pass). Task T1 runs off a separate
+// `bug-subtract` branch where subtract is broken — so T2/T3 start from a green baseline.
 
 export function add(a, b) {
     return a + b;
 }
 
-// BUG (task T1): returns a + b instead of a - b.
 export function subtract(a, b) {
-    return a + b;
+    return a - b;
 }
