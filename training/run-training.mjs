@@ -75,14 +75,18 @@ function runTask(task) {
     const prompt =
         `You are on git branch "${branch}" in a small dependency-free Node.js project. Implement this task and NOTHING else:\n\n` +
         `${task.prompt}\n\n` +
-        `When done: stage ONLY the files you changed (git add <files>, never -A) and make ONE commit with subject ` +
-        `"<type>(scope): <desc> (${task.id})" — e.g. "fix(math): correct subtract (${task.id})". ` +
+        `When done: stage ONLY the files you changed (git add <files>, never -A) and make ONE commit whose ` +
+        `subject is a Conventional Commit ending with "(${branch})" — e.g. "fix(math): correct subtract (${branch})". ` +
         `Do NOT run any lint/typecheck/test yourself, do NOT open a PR. Implement, commit, then stop.`;
 
     let agentErr = null;
     const t0 = Date.now();
     try {
-        sh(`claude -p ${JSON.stringify(prompt)} --permission-mode acceptEdits --max-turns ${maxTurns}`, wt, { timeout: 600000 });
+        // Feed the prompt via STDIN, not as a shell arg — the prompt contains quotes and newlines that
+        // cmd.exe would mangle ("The system cannot find the file specified"). `claude -p` reads stdin.
+        execSync(`claude -p --permission-mode acceptEdits --max-turns ${maxTurns}`, {
+            cwd: wt, input: prompt, encoding: "utf8", timeout: 600000, stdio: ["pipe", "pipe", "pipe"],
+        });
     } catch (e) {
         agentErr = ((e.stdout || "") + (e.stderr || e.message || "")).toString().slice(-800);
     }

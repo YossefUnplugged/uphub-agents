@@ -93,9 +93,9 @@ if (wanted("commit")) {
         const ticketRe = new RegExp(target.conventions.commitTicketPattern);
         const okSubject = subjectRe.test(subject);
         const okTicket = ticketRe.test(msg);
-        if (okSubject && okTicket) record("commit", "pass", `conventional subject + UNP id present ("${subject}")`);
+        if (okSubject && okTicket) record("commit", "pass", `conventional subject + ticket ref present ("${subject}")`);
         else record("commit", "fail",
-            `${okSubject ? "" : "subject doesn't match <type>(<scope>): … . "}${okTicket ? "" : "no UNP-NNNN reference in the message."}`);
+            `${okSubject ? "" : `subject doesn't match ${target.conventions.commitSubjectPattern} . `}${okTicket ? "" : `message lacks a ticket ref matching ${target.conventions.commitTicketPattern} .`}`);
     } catch (e) { record("commit", "fail", `could not read commit: ${e.message}`); }
 }
 
