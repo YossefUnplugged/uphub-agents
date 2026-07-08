@@ -139,18 +139,22 @@ if (wanted("omission")) {
     }
 }
 
-// staged-path guard: generated/context files must NEVER be committed.
+// context-path guard: generated/context files must NEVER be committed.
 // (nested CLAUDE.md is not gitignored, so this is the safety net — see standards/git.md)
+// Checks the STAGED index AND the committed diff (base...HEAD): the agent commits before Gate A runs,
+// so a "staged-only" check sees an empty index and skips — a committed .claude/ or CLAUDE.md would slip
+// through. Both surfaces are inspected so the guard actually holds post-commit.
 if (wanted("staged")) {
-    let staged = [];
-    try { staged = git("diff --cached --name-only").split("\n").filter(Boolean); } catch { /* no staged / no repo */ }
-    if (!staged.length) {
-        record("staged", "skip", "nothing staged");
+    const isForbidden = (f) => /(^|\/)\.claude\//.test(f) || /(^|\/)CLAUDE\.md$/.test(f) || /_inventory\.md$/.test(f);
+    let staged = [], committed = [];
+    try { staged = git("diff --cached --name-only").split("\n").filter(Boolean); } catch { /* no index / no repo */ }
+    try { committed = git(`diff --name-only ${args.base}...HEAD`).split("\n").filter(Boolean); } catch { /* base ref missing locally */ }
+    const forbidden = [...new Set([...staged, ...committed])].filter(isForbidden);
+    if (!staged.length && !committed.length) {
+        record("staged", "skip", "nothing staged or committed vs base");
     } else {
-        const forbidden = staged.filter(f =>
-            /(^|\/)\.claude\//.test(f) || /(^|\/)CLAUDE\.md$/.test(f) || /_inventory\.md$/.test(f));
         forbidden.length === 0
-            ? record("staged", "pass", "no agent-context files staged")
+            ? record("staged", "pass", "no agent-context files staged or committed")
             : record("staged", "fail", `agent-context files must not be committed (use explicit \`git add\`, never -A):\n      ${forbidden.join("\n      ")}`);
     }
 }
