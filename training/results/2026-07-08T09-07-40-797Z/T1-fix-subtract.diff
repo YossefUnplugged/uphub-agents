@@ -1,0 +1,11 @@
+diff --git a/src/mathUtils.mjs b/src/mathUtils.mjs
+index 8c574cc..a0f487a 100644
+--- a/src/mathUtils.mjs
++++ b/src/mathUtils.mjs
+@@ -6,5 +6,5 @@ export function add(a, b) {
+ }
+ 
+ export function subtract(a, b) {
+-    return a + b;
++    return a - b;
+ }
