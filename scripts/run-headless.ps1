@@ -1,51 +1,28 @@
-# run-headless.ps1 — run the triage protocol once, headless, on the owner's machine.
+# run-headless.ps1 — manual-trigger entry to the triage orchestrator.
+#
+# Delegates to scripts/triage.mjs, which realizes the two P0 guarantees:
+#   #3  the work happens in an ISOLATED git worktree off origin/main — never the developer's checkout;
+#   #2  the WRAPPER runs Gate A (the implement-phase agent has no tool to run it, push, or open a PR).
 # Local-only (ADR-006). Uses the gh + Atlassian-MCP auth already on this machine.
-# Usage:  pwsh -File scripts/run-headless.ps1
+#
+# Usage:
+#   pwsh -File scripts/run-headless.ps1 -Ticket UNP-1234            # real run (implement → gate → close)
+#   pwsh -File scripts/run-headless.ps1 -Ticket UNP-1234 -Keep      # keep the worktree to inspect
+#   pwsh -File scripts/run-headless.ps1 -Ticket TEST-1  -DryRun     # exercise the spine, no network
 param(
-    [string]$Target = "admin"
+    [Parameter(Mandatory = $true)][string]$Ticket,
+    [string]$Target = "admin",
+    [switch]$Keep,
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
 $AgentRoot = Split-Path -Parent $PSScriptRoot
-$Targets   = Get-Content (Join-Path $AgentRoot "config\targets.json") | ConvertFrom-Json
-$RepoPath  = $Targets.targets.$Target.path
-$Triage    = Get-Content (Join-Path $AgentRoot "prompts\triage.md") -Raw
 
-# Tools the triage protocol needs, non-interactively. Mirrors admin/.claude/settings.local.json
-# (expanded with the Atlassian write tools triage requires — keep these two in sync).
-$AllowedTools = @(
-    "Read","Edit","Write","Glob","Grep",
-    "Bash(npx *)","Bash(npm *)","Bash(node *)","Bash(git *)","Bash(gh *)",
-    "mcp__atlassian__atlassianUserInfo",
-    "mcp__atlassian__searchJiraIssuesUsingJql",
-    "mcp__atlassian__getJiraIssue",
-    "mcp__atlassian__transitionJiraIssue",
-    "mcp__atlassian__addCommentToJiraIssue",
-    # Browser — so the agent reaches IP-restricted internal resources ITSELF (standards/internal-access.md)
-    "mcp__claude-in-chrome__tabs_context_mcp",
-    "mcp__claude-in-chrome__tabs_create_mcp",
-    "mcp__claude-in-chrome__navigate",
-    "mcp__claude-in-chrome__get_page_text",
-    "mcp__claude-in-chrome__read_page",
-    "mcp__claude-in-chrome__read_network_requests",
-    "mcp__claude-in-chrome__javascript_tool",
-    # AAA permission sync — register new actions/routes in the AAA DB (standards/aaa-permissions.md)
-    "mcp__up-aaa-sync__list_service_types",
-    "mcp__up-aaa-sync__add_service_type",
-    "mcp__up-aaa-sync__scan_routes",
-    "mcp__up-aaa-sync__sync_actions",
-    "mcp__up-aaa-sync__list_policies",
-    "mcp__up-aaa-sync__add_policy",
-    "mcp__up-aaa-sync__assign_action_to_policy"
-) -join ","
+$cliArgs = @((Join-Path $AgentRoot "scripts\triage.mjs"), "--ticket", $Ticket, "--target", $Target)
+if ($Keep)   { $cliArgs += "--keep" }
+if ($DryRun) { $cliArgs += "--dry-run" }
 
-$Prompt = "Agent-system root: $AgentRoot`n`n$Triage"
-
-Push-Location $RepoPath
-try {
-    Write-Host "run-headless → $Target ($RepoPath)" -ForegroundColor Cyan
-    claude -p $Prompt --permission-mode acceptEdits --allowedTools $AllowedTools --max-turns 60
-}
-finally {
-    Pop-Location
-}
+Write-Host "run-headless → triage $Ticket ($Target)" -ForegroundColor Cyan
+node @cliArgs
+exit $LASTEXITCODE

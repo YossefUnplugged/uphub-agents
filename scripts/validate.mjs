@@ -101,6 +101,17 @@ if (wanted("commit")) {
 
 // forbidden imports
 if (wanted("imports")) {
+    // Diff-scope: judge what the change INTRODUCED, not pre-existing repo debt — otherwise one old
+    // violation on main blocks every per-ticket run. When a base...HEAD diff exists we check only the
+    // changed files; with no diff (HEAD==base / a whole-repo audit) we fall back to scanning the tree.
+    let changedSet = null;
+    try {
+        const changed = git(`diff --name-only ${args.base}...HEAD`).split("\n").filter(Boolean);
+        if (changed.length) changedSet = new Set(changed.map(f => f.replace(/\\/g, "/")));
+    } catch { /* base ref not available locally → tree-wide */ }
+    // Normalize the target root to forward slashes ONCE — listFiles emits OS-separator (backslash on
+    // Windows) paths while TARGET_PATH may be forward-slashed in config, so a literal replace misses.
+    const normTarget = TARGET_PATH.replace(/\\/g, "/").replace(/\/$/, "");
     for (const rule of target.forbiddenImports || []) {
         const base = join(TARGET_PATH, rule.inPath);
         const fileRe = new RegExp(rule.filePattern);
@@ -108,15 +119,18 @@ if (wanted("imports")) {
         const allowRe = rule.allowIfLineMatches ? new RegExp(rule.allowIfLineMatches) : null;
         const violations = [];
         for (const file of listFiles(base, fileRe)) {
+            const relPath = file.replace(/\\/g, "/").slice(normTarget.length).replace(/^\//, "");
+            if (changedSet && !changedSet.has(relPath)) continue;   // only judge files this change touched
             const lines = readFileSync(file, "utf8").split("\n");
             lines.forEach((line, i) => {
                 if (matchRe.test(line) && !(allowRe && allowRe.test(line))) {
-                    violations.push(`${file.replace(TARGET_PATH, "").replace(/\\/g, "/")}:${i + 1}`);
+                    violations.push(`${relPath}:${i + 1}`);
                 }
             });
         }
+        const scope = changedSet ? "changed files" : "tree-wide";
         violations.length === 0
-            ? record(`imports:${rule.name}`, "pass", rule.message)
+            ? record(`imports:${rule.name}`, "pass", `${rule.message} (${scope})`)
             : record(`imports:${rule.name}`, "fail", `${rule.message}\n      ${violations.join("\n      ")}`);
     }
 }
