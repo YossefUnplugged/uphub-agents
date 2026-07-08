@@ -23,7 +23,7 @@ const REPO_ROOT = resolve(__dirname, "..");
 
 /* ---------- args ---------- */
 function parseArgs(argv) {
-    const args = { target: "admin", base: "origin/main", only: null, skip: [], json: false };
+    const args = { target: "admin", base: "origin/main", only: null, skip: [], json: false, path: null };
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
         if (a === "--target") args.target = argv[++i];
@@ -31,6 +31,7 @@ function parseArgs(argv) {
         else if (a === "--only") args.only = argv[++i].split(",").map(s => s.trim());
         else if (a === "--skip") args.skip = argv[++i].split(",").map(s => s.trim());
         else if (a === "--json") args.json = true;
+        else if (a === "--path") args.path = argv[++i];   // override the target's repo path (e.g. a worktree)
     }
     return args;
 }
@@ -43,7 +44,7 @@ if (!target) {
     console.error(`Unknown target "${args.target}". Known: ${Object.keys(config.targets || {}).join(", ")}`);
     process.exit(2);
 }
-const TARGET_PATH = target.path;
+const TARGET_PATH = args.path || target.path;
 
 /* ---------- helpers ---------- */
 const results = [];
@@ -164,13 +165,18 @@ for (const key of ["lint", "typecheck", "test"]) {
     } catch (e) {
         const out = (e.stdout || e.stderr || e.message || "").toString();
         const tail = out.split("\n").slice(-12).join("\n");
-        // Distinguish "the tool COULDN'T RUN" (repo tooling not set up) from "the tool FOUND problems".
-        // Gate A judges the agent's code, not the target repo's broken toolchain — a tool that can't
-        // even start is a warning, not a Gate-A failure. (e.g. admin's eslint config/plugins are absent.)
-        const toolingBroken = /No ESLint configuration found|couldn't find a configuration file|ESLint couldn't find|was referenced from the config file|Cannot find (module|package)|is not installed correctly|command not found|is not recognized as|Cannot find the binary|Failed to load (config|plugin)/i.test(out);
-        record(key, toolingBroken ? "warn" : "fail",
-            toolingBroken
-                ? `${cmd}\n      tooling could not run (not a code violation) — treated as a WARNING, not a Gate-A failure. Fix the target's ${key} setup separately:\n      ${tail}`
+        // "Tool couldn't START" (repo toolchain not set up) vs "tool FOUND problems in the agent's code".
+        // CRITICAL: "Cannot find module" is deliberately NOT here — that is TS2307 for a bad import in the
+        // agent's OWN code (the single most common real defect); classifying it as tooling would let
+        // broken, non-compiling code print "Gate A PASSED".
+        const toolingBroken = /No ESLint configuration found|couldn't find a configuration file|ESLint couldn't find|was referenced from the config file|is not installed correctly|command not found|is not recognized as|Cannot find the binary|Failed to load (config|plugin)/i.test(out);
+        // Backstop: if the tool emitted ANY real per-file diagnostic, it DID run — a failure is a failure,
+        // never downgraded to a warning, even if a tooling phrase also appears in the output.
+        const hasRealDiagnostics = /error TS\d+|\bTS\d{3,}\b|\d+\s+problems?\s*\(\d+\s+error|\bFAIL\b|✗|✘|Tests?\s+failed|failing/i.test(out);
+        const treatAsWarn = toolingBroken && !hasRealDiagnostics;
+        record(key, treatAsWarn ? "warn" : "fail",
+            treatAsWarn
+                ? `${cmd}\n      tooling could not START (not a code violation) — WARNING, not a Gate-A failure. Fix the target's ${key} setup separately:\n      ${tail}`
                 : `${cmd}\n      ${tail}`);
     }
 }

@@ -9,6 +9,10 @@ triage.log
 .triage-drafts/
 .agent-sync-manifest.json
 
+# Training track — generated git repos (only training/sandbox-seed/ + tasks/ are tracked)
+training/.sandbox/
+training/.worktrees/
+
 # Node / OS
 node_modules/
 .DS_Store

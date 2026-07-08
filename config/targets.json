@@ -41,6 +41,33 @@
           "message": "A tRPC route changed but no controller or shared-type change — verify the contract isn't half-wired."
         }
       ]
+    },
+
+    "sandbox": {
+      "_comment": "Disposable training sandbox (dependency-free Node ESM). Built by training/setup-sandbox.mjs; exercised by training/run-training.mjs, which overrides `path` per task with --path <worktree>. This proves the whole envelope works on a non-admin target with no npm install.",
+      "displayName": "training sandbox (Node ESM)",
+      "path": "C:/Users/YossefBenHaim/Desktop/unplugged-agent-system/training/.sandbox",
+      "languages": ["javascript"],
+      "onboarded": true,
+      "conventions": {
+        "branchPattern": "^task-[a-z0-9-]+$",
+        "commitSubjectPattern": "^(feat|fix|test|docs|chore|refactor|perf|style)(\\([\\w-]+\\))?: .+",
+        "commitTicketPattern": "task-[a-z0-9-]+"
+      },
+      "checks": {
+        "lint": "node tools/lint.mjs",
+        "typecheck": "node tools/typecheck.mjs",
+        "test": "node --test"
+      },
+      "forbiddenImports": [
+        {
+          "name": "no-fs-in-src",
+          "inPath": "src",
+          "filePattern": "\\.mjs$",
+          "matchPattern": "(import|require)\\s*[^;\\n]*['\"]node:fs['\"]",
+          "message": "src/ must stay pure — no filesystem imports (a deliberate trap so a task can exercise the forbidden-import gate)."
+        }
+      ]
     }
   }
 }

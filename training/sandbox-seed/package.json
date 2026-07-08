@@ -1,0 +1,12 @@
+{
+  "name": "uphub-training-sandbox",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Disposable sandbox the uphub agent is exercised against. No dependencies — Node built-ins only, so it is fast and deterministic to set up on any machine.",
+  "scripts": {
+    "typecheck": "node tools/typecheck.mjs",
+    "lint": "node tools/lint.mjs",
+    "test": "node --test"
+  }
+}

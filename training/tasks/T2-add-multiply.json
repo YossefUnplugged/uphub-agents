@@ -1,0 +1,9 @@
+{
+  "id": "T2-add-multiply",
+  "branch": "task-add-multiply",
+  "kind": "feature (implement + test)",
+  "prompt": "Add a `multiply(a, b)` function to src/mathUtils.mjs that returns the product of a and b, and export it. Add a test for it in test/mathUtils.test.mjs following the style of the existing tests. Keep the existing functions working.",
+  "hiddenTest": "training/tasks/hidden/T2-multiply.hidden.test.mjs",
+  "negativeControl": false,
+  "expect": "multiply is exported and correct; a HIDDEN acceptance test (unknown to the agent) passes, so a weak self-test cannot game it."
+}
