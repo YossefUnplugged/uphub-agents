@@ -14,6 +14,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, rmSync, existsSync, statSync, copyFileSync } from "node:fs";
 import { dirname, join, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -41,14 +42,36 @@ function copy(src, dst) {
     written.push(relative(target.path, dst).replace(/\\/g, "/"));
     log(`copy  ${relative(target.path, dst).replace(/\\/g, "/")}`);
 }
+/** relative paths of every file under dir (recursive) */
+function filesUnder(dir, root = dir, acc = []) {
+    for (const e of readdirSync(dir)) {
+        const full = join(dir, e);
+        if (statSync(full).isDirectory()) filesUnder(full, root, acc);
+        else acc.push(relative(root, full));
+    }
+    return acc;
+}
 
 console.log(`\nsync-target → ${target.displayName}  (${DEST})\n`);
+
+/* ---- 0. freshness gate — never stamp a skill that points at a file that does not exist ---- */
+if (!args.includes("--force")) {
+    try {
+        execSync(`node "${join(REPO_ROOT, "scripts", "check-skill-freshness.mjs")}" --target ${targetName}`,
+            { stdio: "pipe", encoding: "utf8" });
+    } catch (e) {
+        console.error((e.stdout || "") + (e.stderr || ""));
+        console.error("  ✗ sync aborted: fix the broken skill link(s) above, or re-run with --force to sync anyway.\n");
+        process.exit(1);
+    }
+}
 
 /* ---- 1. skills mirror ---- */
 const srcSkills = join(REPO_ROOT, "skills");
 const destSkills = join(DEST, "skills");
+const metaSkills = new Set(config.metaSkills || []);   // repo-maintenance skills — never synced to a target
 const skillNames = existsSync(srcSkills)
-    ? readdirSync(srcSkills).filter(n => statSync(join(srcSkills, n)).isDirectory())
+    ? readdirSync(srcSkills).filter(n => statSync(join(srcSkills, n)).isDirectory() && !metaSkills.has(n))
     : [];
 
 // load prior manifest to detect removed skills
@@ -57,8 +80,12 @@ let prior = { written: [] };
 if (existsSync(manifestPath)) { try { prior = JSON.parse(readFileSync(manifestPath, "utf8")); } catch { /* ignore */ } }
 
 for (const name of skillNames) {
-    const src = join(srcSkills, name, "SKILL.md");
-    if (existsSync(src)) copy(src, join(destSkills, name, "SKILL.md"));
+    const srcDir = join(srcSkills, name);
+    // Mirror the WHOLE skill dir — SKILL.md AND its supporting files (recipes, references, images).
+    // Copying only SKILL.md silently breaks in-skill links like admin-design → component-recipes.md.
+    for (const rel of filesUnder(srcDir)) {
+        copy(join(srcDir, rel), join(destSkills, name, rel));
+    }
 }
 
 /* ---- 2. routing table + hook ---- */

@@ -393,11 +393,6 @@ const data = await axios.get(url);
 return data;
 ```
 
-## Related References
-
-- [rest.md](references/rest.md) - REST conventions
-- [errors.md](references/errors.md) - Error handling patterns
-
 ## Capability Details
 
 ### trpc-router

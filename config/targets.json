@@ -1,6 +1,9 @@
 {
   "_comment": "Every repo the agent can work on. The agent roster never changes per target — only these commands and conventions do. This realizes the language-agnostic envelope: add a Kotlin/Java target by adding an entry with its own check commands. ${base} is substituted with the --base git ref (default origin/main).",
 
+  "_metaSkills_note": "Skills that maintain THIS repo (uphub-agents) and must NEVER be synced into a target — their doc links (e.g. docs/architecture/) only resolve here, not under a target's .claude/. sync-target excludes them.",
+  "metaSkills": ["maintaining-the-architecture-wiki"],
+
   "targets": {
     "admin": {
       "displayName": "admin (Nx monorepo)",

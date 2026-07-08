@@ -406,11 +406,6 @@ const error = screen.getByText('Error');  // Use queryByText instead
 expect(mockFn).toHaveBeenCalled();  // Wrap in waitFor
 ```
 
-## Related References
-
-- [unit.md](references/unit.md) - Unit testing patterns
-- [e2e.md](references/e2e.md) - E2E testing patterns
-
 ## Capability Details
 
 ### component-testing
