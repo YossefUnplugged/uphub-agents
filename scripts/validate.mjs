@@ -192,6 +192,22 @@ if (wanted("tripwire") && (target.securityPaths || []).length) {
     }
 }
 
+// router-miss audit (WARN only, never fails): source paths the route-on-touch hook edited but couldn't
+// map to a skill. The design promises the validator surfaces these so the PR body carries them and the
+// routing table grows; this is that surfacing. Reads the hook's log at <target>/.claude/.router-miss.log.
+if (wanted("routermiss")) {
+    const missLog = join(TARGET_PATH, ".claude", ".router-miss.log");
+    let misses = [];
+    try {
+        misses = [...new Set(readFileSync(missLog, "utf8").split("\n")
+            .filter(l => l.startsWith("router-miss:"))
+            .map(l => l.replace("router-miss:", "").trim()).filter(Boolean))];
+    } catch { /* no log ⇒ no misses */ }
+    if (misses.length) {
+        record("router-miss", "warn", `unmapped source paths were edited — add routes to rules/routing.json:\n      ${misses.join("\n      ")}`);
+    }
+}
+
 // heavy checks: run the target's own commands
 for (const key of ["lint", "typecheck", "test"]) {
     if (!wanted(key) || !target.checks?.[key]) continue;

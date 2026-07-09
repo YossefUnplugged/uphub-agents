@@ -122,6 +122,8 @@ console.log(`  worktree: ${wt}  (off ${startPoint})`);
 const srcClaude = join(REPO, ".claude");
 if (existsSync(srcClaude)) {
     cpSync(srcClaude, join(wt, ".claude"), { recursive: true });
+    const staleMiss = join(wt, ".claude", ".router-miss.log");
+    if (existsSync(staleMiss)) rmSync(staleMiss, { force: true });   // per-run misses only, not carried over
     console.log("  copied .claude context into the worktree (skills/routing/hook/settings)");
 } else {
     console.log("  ⚠ target has no .claude — run sync-target first; agent would have no skills");
