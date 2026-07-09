@@ -19,6 +19,18 @@ allowlist can trivially bypass is not a control. Several "controls" in the docs 
 | 5 | (undocumented) | The allowlist grants `mcp__claude-in-chrome__javascript_tool` + `navigate` + `read_network_requests` — **arbitrary JS execution and network access in a browser**. This is a large exfiltration/action surface that the security model does not mention at all. | Medium |
 | 6 | The agent "can't grade itself / can't bypass its gate" (implied by Gate A/B design) | Until the training-track port lands, the production path lets the agent **edit `validate.mjs`, run its own gate, and push** — `Edit`/`Write` + `Bash(node/git *)` are all allowed in the same session. (Proven-safe pattern now exists in `training/`; production port is P0 #2/#3, pending owner approval.) | **High** |
 
+## Self-verification trade-off (owner decision 2026-07-09)
+
+Adopting the loops article's inner agentic loop, the implement/fix phases may now RUN the target's
+check commands (`npx nx`, `npx tsc`, `npm run`, `node --test`, `node tools/*`) in the isolated worktree.
+**Be honest about what that grants:** running tests *is* executing code the agent wrote — check-running
+is arbitrary local code execution by construction (a test file can read any file the owner's account can,
+or make network calls). No command-scoping changes that. What still contains it: the worktree carries no
+`.env` (gitignored, never copied); the phase still has no push/gh/merge/Jira-write tools; the spec-extraction
+firewall treats ticket text as data; Gate B security-reviews the diff; the terminal state is a draft PR a
+human reads. Residual risk accepted by the owner in exchange for the article-level self-sharpening loop
+(fewer expensive outer fix rounds, verified handoffs).
+
 ## What that means
 
 The honest one-liner: **containment today = the allowlist + (unverified) branch protection.** Everything

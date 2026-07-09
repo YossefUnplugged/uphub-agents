@@ -8,5 +8,6 @@
   "negativeControl": false,
   "fixRounds": true,
   "minRounds": 1,
+  "noSelfVerify": true,
   "expect": "The implement phase adds square() but leaves the seeded `var` in double() (it was told not to touch existing code) -> Gate A RED on lint -> the WRAPPER-owned fix-round loop feeds the exact lint failure to a fix agent -> var becomes let/const -> full Gate A green. PASS requires gate green AND at least 1 fix round actually used (proves the loop ran, not a lucky first pass)."
 }

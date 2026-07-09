@@ -83,7 +83,15 @@ function runTask(task) {
         `${task.prompt}\n\n` +
         `When done: stage ONLY the files you changed (git add <files>, never -A) and make ONE commit whose ` +
         `subject is a Conventional Commit ending with "(${branch})" — e.g. "fix(math): correct subtract (${branch})". ` +
-        `Do NOT run any lint/typecheck/test yourself, do NOT open a PR. Implement, commit, then stop.`;
+        // Self-verification (the article's inner loop) — EXCEPT for tasks that deliberately test the
+        // OUTER fix-round loop (noSelfVerify, e.g. T4): those need the implement phase blind so the
+        // gate goes deterministically red and the wrapper-owned loop is exercised.
+        (task.noSelfVerify
+            ? `Do NOT run any lint/typecheck/test yourself, do NOT open a PR. Implement, commit, then stop.`
+            : `SELF-VERIFY before committing: run this project's checks yourself (node --test, node tools/lint.mjs, ` +
+              `node tools/typecheck.mjs) and fix what fails until they are green — never hand off unverified work. ` +
+              `Your green run is not the verdict (the wrapper re-runs the authoritative gate). Do NOT open a PR. ` +
+              `Implement, verify, commit, then stop.`);
 
     let agentErr = null;
     const t0 = Date.now();

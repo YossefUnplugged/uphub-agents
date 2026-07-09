@@ -16,6 +16,7 @@ Every loop in uphub lives in the **deterministic wrapper** (Node/PowerShell orch
 - **Loop continuation, round counting, and stop evaluation are wrapper code.** The evaluator is a mechanical signal — Gate A's exit code, an HTTP status, a ledger counter — never a model, and never the acting agent.
 - **All caps live in config (`config/loops.json`), not prompts.** The agent cannot raise its own round cap because the cap is not language — it's an integer the wrapper enforces.
 - The article's in-session primitives (`/goal`, `/loop`, `/schedule`) are **deliberately not used** for the autonomous pipeline: our agents run headless (`claude -p`) inside orchestrator phases; the loop shell around them is ours.
+- **Self-verification ≠ self-grading (owner decision 2026-07-09).** The agent SHOULD run the target's own checks inside its isolated worktree and iterate until they pass — the article's *inner* agentic loop (act → check → fix → repeat), and the allowlist grants the scoped check commands (nx/tsc/npm-script/node-test — never a general shell). What it may NOT do is *grade*: its green run is never the verdict, the wrapper re-runs the full gate, and the *outer* loop's continuation/stop remains exclusively wrapper-owned. This matches the article exactly — there too the stop condition is checked by an **external** evaluator with hard turn caps, never by the acting agent.
 - Loop taxonomy mapping, per-loop stop conditions, and the ops runbook live in [[12 Loops]].
 
 ## Consequences

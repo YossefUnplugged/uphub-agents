@@ -1,0 +1,40 @@
+diff --git a/src/mathUtils.mjs b/src/mathUtils.mjs
+index 7eb8fe5..a463900 100644
+--- a/src/mathUtils.mjs
++++ b/src/mathUtils.mjs
+@@ -9,8 +9,11 @@ export function subtract(a, b) {
+     return a - b;
+ }
+ 
+-// Helper with a deliberate lint violation (var) — T4's fix-round bait.
+ export function double(a) {
+-    var result = a * 2;
++    const result = a * 2;
+     return result;
+ }
++
++export function square(a) {
++    return a * a;
++}
+diff --git a/test/mathUtils.test.mjs b/test/mathUtils.test.mjs
+index 887ef14..d1a1adb 100644
+--- a/test/mathUtils.test.mjs
++++ b/test/mathUtils.test.mjs
+@@ -1,6 +1,7 @@
+ import { test } from "node:test";
+ import assert from "node:assert/strict";
+ import { add, subtract } from "../src/mathUtils.mjs";
++import { square } from "../src/mathUtils.mjs";
+ 
+ test("add returns the sum", () => {
+     assert.equal(add(2, 3), 5);
+@@ -13,3 +14,9 @@ test("subtract returns the difference", () => {
+     assert.equal(subtract(0, 4), -4);
+     assert.equal(subtract(-2, -2), 0);
+ });
++
++test("square returns the product of a number with itself", () => {
++    assert.equal(square(3), 9);
++    assert.equal(square(-4), 16);
++    assert.equal(square(0), 0);
++});

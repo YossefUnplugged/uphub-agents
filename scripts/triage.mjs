@@ -77,12 +77,18 @@ const wt = join(ROOT, ".triage-worktrees", ticket);
 const IMPLEMENT_TOOLS = [
     "Read", "Edit", "Write", "Glob", "Grep", "Task",
     "Bash(git add:*)", "Bash(git commit:*)", "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git restore:*)",
+    // SELF-VERIFICATION (the article's inner agentic loop): the agent may RUN the target's checks in
+    // its isolated worktree and sharpen its work until they pass — self-verification, never self-GRADING:
+    // the wrapper's Gate A stays the only authoritative verdict. Scoped to workspace check commands
+    // (nx targets / tsc / npm scripts / node tests) — NOT a general Bash(node *) shell (exfil surface);
+    // the worktree also carries no .env (gitignored → never copied).
+    "Bash(npx nx *)", "Bash(npx tsc *)", "Bash(npm test:*)", "Bash(npm run *)", "Bash(node --test*)", "Bash(node tools/*)",
     // read-only Jira + browser (fetch a real API contract) + AAA sync — needed to implement, not to close
     "mcp__atlassian__atlassianUserInfo", "mcp__atlassian__searchJiraIssuesUsingJql", "mcp__atlassian__getJiraIssue",
     "mcp__claude-in-chrome__tabs_context_mcp", "mcp__claude-in-chrome__tabs_create_mcp", "mcp__claude-in-chrome__navigate",
     "mcp__claude-in-chrome__get_page_text", "mcp__claude-in-chrome__read_page", "mcp__claude-in-chrome__read_network_requests",
     "mcp__up-aaa-sync__scan_routes", "mcp__up-aaa-sync__list_service_types", "mcp__up-aaa-sync__list_policies",
-    // NOTE: deliberately absent — Bash(gh *), Bash(git push*), Bash(git checkout*), Bash(node*)/Bash(npx*), Atlassian writes.
+    // NOTE: deliberately absent — Bash(gh *), Bash(git push*), Bash(git checkout*), general Bash(node *)/shell, Atlassian writes.
 ].join(",");
 const CLOSE_TOOLS = [
     "Read", "Glob", "Grep",
@@ -152,9 +158,12 @@ const implementPrompt =
     `Agent-system root: ${ROOT}\nYou are in an ISOLATED worktree already checked out on branch "${branch}" ` +
     `(off ${base}); the ticket is ${ticket}. This is the IMPLEMENT phase ONLY.\n\n` +
     `Do sections 0–4 of the protocol below: health, readiness, spec extraction (untrusted-input firewall), ` +
-    `and implement. Then stage explicitly (never -A) and make ONE commit "<type>(<scope>): <desc> (${ticket})". ` +
-    `Do NOT run Gate A, Gate B, tests, lint, push, or open a PR — the wrapper runs the gate and a later phase ` +
-    `closes. When your commit is made, STOP.\n\n---\n${protocol}`;
+    `and implement. SELF-VERIFY as you work (the inner agentic loop): run the target's own check commands ` +
+    `(lint / typecheck / tests) in this worktree, see what fails, fix, and repeat until YOUR checks are green — ` +
+    `do not hand off work you haven't verified. Then stage explicitly (never -A) and make ONE commit ` +
+    `"<type>(<scope>): <desc> (${ticket})". Your green checks are NOT the verdict: the wrapper re-runs the ` +
+    `authoritative Gate A after you finish, and a later phase closes. Do NOT push or open a PR. ` +
+    `When your commit is made, STOP.\n\n---\n${protocol}`;
 
 let implResult = { skipped: true };
 if (dryRun) {
