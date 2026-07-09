@@ -51,6 +51,8 @@ You are the coordinator and you may delegate to parallel sub-agents whenever it 
 ## 5. Gate A — mechanical (run by the WRAPPER, not you)
 The orchestrator (`scripts/triage.mjs`) runs `validate.mjs` against your worktree AFTER you commit — its exit code is the authoritative verdict. You do NOT run it, and in the implement phase you have no tool to push, open a PR, or run the gate. Your only job here is to commit clean, compliant work. If the wrapper reports RED it stops the run before the close phase and surfaces the block for a human; you never grade yourself, push on red, or bypass the gate.
 
+Gate A also includes a **diff-side security tripwire**: if your diff touches auth/webhook/WS/middleware paths (`config/targets.json` → `securityPaths`) and the ticket is not `plan-approved`, the wrapper HARD-BLOCKS — fail-closed, human required. So do not touch those paths for a ticket that wasn't plan-approved; if the legitimate task genuinely needs them, STOP and flag that the ticket needs `plan-approved` rather than proceeding.
+
 ## 6. Gate B — fresh-context review
 In a SEPARATE reasoning pass over the DIFF ONLY (`git diff main...HEAD`), run the equivalent of `/code-review` + `/security-review`. List findings as checkboxes. Unresolved CRITICAL/HIGH → 1 fix round → still unresolved → push, label `ai-blocked`, comment, STOP `TRIAGE-BLOCKED: gate-b`.
 

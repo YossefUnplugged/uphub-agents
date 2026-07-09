@@ -23,7 +23,7 @@ const REPO_ROOT = resolve(__dirname, "..");
 
 /* ---------- args ---------- */
 function parseArgs(argv) {
-    const args = { target: "admin", base: "origin/main", only: null, skip: [], json: false, path: null };
+    const args = { target: "admin", base: "origin/main", only: null, skip: [], json: false, path: null, planApproved: false };
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
         if (a === "--target") args.target = argv[++i];
@@ -32,6 +32,7 @@ function parseArgs(argv) {
         else if (a === "--skip") args.skip = argv[++i].split(",").map(s => s.trim());
         else if (a === "--json") args.json = true;
         else if (a === "--path") args.path = argv[++i];   // override the target's repo path (e.g. a worktree)
+        else if (a === "--plan-approved") args.planApproved = true;   // ticket carries the plan-approved label
     }
     return args;
 }
@@ -170,6 +171,24 @@ if (wanted("staged")) {
         forbidden.length === 0
             ? record("staged", "pass", "no agent-context files staged or committed")
             : record("staged", "fail", `agent-context files must not be committed (use explicit \`git add\`, never -A):\n      ${forbidden.join("\n      ")}`);
+    }
+}
+
+// security tripwire (diff-side): a change touching auth/webhook/WS/middleware paths WITHOUT the
+// plan-approved signal is a HARD BLOCK — the human must approve. Fail-closed: no signal ⇒ blocked.
+// Detection is on the DIFF, so it catches a ticket that was mislabeled (readiness thought it safe).
+if (wanted("tripwire") && (target.securityPaths || []).length) {
+    let changed = [];
+    try { changed = git(`diff --name-only ${args.base}...HEAD`).split("\n").filter(Boolean).map(f => f.replace(/\\/g, "/")); }
+    catch { /* base ref not available locally */ }
+    const markers = target.securityPaths.map(s => s.toLowerCase());
+    const hits = changed.filter(f => markers.some(m => f.toLowerCase().includes(m)));
+    if (!hits.length) {
+        record("tripwire", "pass", "no security-sensitive paths in the diff");
+    } else if (args.planApproved) {
+        record("tripwire", "warn", `security-sensitive paths changed WITH plan-approved — reviewer must scrutinize:\n      ${hits.join("\n      ")}`);
+    } else {
+        record("tripwire", "fail", `security-sensitive paths changed WITHOUT plan-approved — HARD BLOCK, human required:\n      ${hits.join("\n      ")}`);
     }
 }
 

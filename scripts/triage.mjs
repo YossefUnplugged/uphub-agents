@@ -41,6 +41,7 @@ const targetName = getFlag("--target") || "admin";
 const base = getFlag("--base") || "origin/main";
 const keep = argv.includes("--keep");
 const dryRun = argv.includes("--dry-run");
+const planApproved = argv.includes("--plan-approved");   // owner-confirmed the ticket's plan-approved label
 const maxTurns = getFlag("--max-turns") || "60";
 
 if (!ticket) { console.error("Usage: node scripts/triage.mjs --ticket <TICKET> [--keep] [--dry-run]"); process.exit(2); }
@@ -154,8 +155,9 @@ let gate;
 // In dry-run the worktree has no node_modules, so skip the heavy nx checks and exercise the cheap,
 // worktree-correctness checks (branch/commit/imports/staged) that prove the spine wired up right.
 const gateSkip = dryRun ? " --skip lint,typecheck,test" : "";
+const gatePlan = planApproved ? " --plan-approved" : "";   // fail-closed: absent ⇒ security paths hard-block
 try {
-    gate = JSON.parse(sh(`node "${VALIDATE}" --target ${targetName} --path "${wt}" --base ${base}${gateSkip} --json`, ROOT));
+    gate = JSON.parse(sh(`node "${VALIDATE}" --target ${targetName} --path "${wt}" --base ${base}${gateSkip}${gatePlan} --json`, ROOT));
 } catch (e) {
     try { gate = JSON.parse((e.stdout || "").toString()); }
     catch { gate = { ok: false, results: [], error: ((e.stdout || "") + (e.stderr || e.message || "")).toString().slice(-500) }; }

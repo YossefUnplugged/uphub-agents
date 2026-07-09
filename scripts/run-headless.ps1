@@ -13,15 +13,19 @@ param(
     [Parameter(Mandatory = $true)][string]$Ticket,
     [string]$Target = "admin",
     [switch]$Keep,
-    [switch]$DryRun
+    [switch]$DryRun,
+    # Pass ONLY after you have confirmed the ticket truly carries the `plan-approved` label. Without it,
+    # a diff that touches auth/webhook/WS/middleware paths hard-blocks at Gate A (fail-closed by design).
+    [switch]$PlanApproved
 )
 
 $ErrorActionPreference = "Stop"
 $AgentRoot = Split-Path -Parent $PSScriptRoot
 
 $cliArgs = @((Join-Path $AgentRoot "scripts\triage.mjs"), "--ticket", $Ticket, "--target", $Target)
-if ($Keep)   { $cliArgs += "--keep" }
-if ($DryRun) { $cliArgs += "--dry-run" }
+if ($Keep)         { $cliArgs += "--keep" }
+if ($DryRun)       { $cliArgs += "--dry-run" }
+if ($PlanApproved) { $cliArgs += "--plan-approved" }
 
 Write-Host "run-headless → triage $Ticket ($Target)" -ForegroundColor Cyan
 node @cliArgs

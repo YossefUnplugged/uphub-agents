@@ -13,7 +13,7 @@ allowlist can trivially bypass is not a control. Several "controls" in the docs 
 | # | Doc claim | Reality (verified) | Severity |
 |---|-----------|--------------------|----------|
 | 1 | "`.env` / secrets are **deny-read**" — README access-restriction row (status 🔧 "wired"), `08 Security Model` §"Don't read secrets" | **No deny-read exists.** `admin/.claude/settings.local.json`'s `deny` list is destructive-command only (`rm`, `git reset --hard`, `DROP`, …) — nothing about reading files. `Read` is allowed unrestricted, and even a `Read`-deny would be bypassed by `Bash(node *)`, `Bash(npx *)`, or the browser `javascript_tool` — all in the run-headless allowlist. | **High** (false claim in a shared doc) |
-| 2 | Diff-side **security tripwire** reads `.claude/config/paths.json` — `08 Security Model` §"Detection", presents it as an active mitigation | **`paths.json` does not exist** anywhere (repo or synced admin). `validate.mjs` has **no** tripwire check. `Roadmap` item 2.5 correctly lists it as future — but `08` reads as if it's live. | **High** (vapor control) |
+| 2 | Diff-side **security tripwire** — `08 Security Model` §"Detection" | **BUILT (2026-07-09).** Now a real `tripwire` check in `validate.mjs`: the diff is matched against `config/targets.json` → `securityPaths` (auth/webhook/WS/middleware, verified present); a hit without `--plan-approved` is a HARD BLOCK (fail-closed). Config lives in targets.json, not the aspirational `.claude/config/paths.json` the docs named. ~~vapor~~ → resolved. | ~~High~~ closed |
 | 3 | **Secret-scan** on diff + PR body — `ADR-003`, `08 Security Model` | **Not built.** No secret-scan in `validate.mjs` or anywhere in the pipeline. | Medium |
 | 4 | "Never a merge, never a push to `main`/`v*`" framed as enforced | Only **branch protection** enforces this, and it is repo-config-dependent + **unverified**. The agent's allowlist includes `Bash(gh *)` and `Bash(git *)`, so it *can* call `gh pr merge` / `git push` — nothing local stops it. README's closing row honestly hedges ("🛡️ depends on repo config"); other prose does not. | **High** (the no-merge guarantee rests entirely on one unverified platform setting) |
 | 5 | (undocumented) | The allowlist grants `mcp__claude-in-chrome__javascript_tool` + `navigate` + `read_network_requests` — **arbitrary JS execution and network access in a browser**. This is a large exfiltration/action surface that the security model does not mention at all. | Medium |
@@ -35,9 +35,9 @@ mostly still on paper.
 **Drastic — needs owner approval (changes the autonomous agent's capabilities; P0 #2/#3/#8):**
 - Move Gate A out of the agent's session (wrapper runs it; drop `Edit`/`Write` access to `validate.mjs`). — #2
 - Run triage in an isolated worktree, not the dev checkout. — #3
-- Drop `Bash(gh *)` merge verbs and tighten `Bash(git *)` (no `push` to protected refs) from the allowlist; verify branch protection actually exists on `main`/`v*`. — #8
-- Decide the browser surface: does triage need `javascript_tool` + network read, or can it be dropped/narrowed? — #8
-- Build the diff-side tripwire for real: add `config/paths.json` + a `validate.mjs` check that hard-blocks security-path diffs without `plan-approved`. — #8
+- Drop `Bash(gh *)` merge verbs and tighten `Bash(git *)` (no `push` to protected refs) from the allowlist; verify branch protection actually exists on `main`/`v*`. — #8 *(partly done: `triage.mjs`'s implement phase has no gh/push, and its close phase excludes `gh pr merge`/`gh pr ready`. Still open: verify branch protection on the platform.)*
+- Decide the browser surface — #8 *(mostly done: `triage.mjs`'s implement allowlist DROPS `javascript_tool` (the arbitrary-JS / POST-anywhere exfil surface flagged in row 5) and keeps only read tools — navigate / get_page_text / read_page / read_network_requests — for fetching real API contracts. Open: whether `read_network_requests` can also go.)*
+- ✅ **DONE (2026-07-09):** the diff-side tripwire is built — `validate.mjs` `tripwire` check + `config/targets.json` `securityPaths`, fail-closed on security-path diffs without `--plan-approved`. Verified: fail (no approval) / warn (approved) / pass (non-security).
 
 None of the "safe" items change what the agent can do; all of the "drastic" items do, which is why they
 wait for the owner.

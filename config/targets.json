@@ -43,6 +43,19 @@
           "expectAlsoTouched": ["apps/admin_backend/src/trpc/controllers/", "libs/admin-types/"],
           "message": "A tRPC route changed but no controller or shared-type change — verify the contract isn't half-wired."
         }
+      ],
+      "_securityPaths_note": "Diff-side security tripwire (validate.mjs `tripwire` check). If the change touches any of these auth/webhook/WS/middleware paths WITHOUT --plan-approved, Gate A HARD-BLOCKS (human required). Fail-closed: absence of the plan-approved signal blocks. Substring match, case-insensitive. Paths verified present 2026-07-09.",
+      "securityPaths": [
+        "apps/admin_backend/src/app.ts",
+        "apps/admin_backend/src/server.ts",
+        "apps/admin_backend/src/utils/webhookHandler.ts",
+        "apps/admin_backend/src/trpc/context.ts",
+        "apps/admin_backend/src/trpc/wsContext.ts",
+        "apps/admin_backend/src/trpc/trpc-ws.ts",
+        "apps/admin_backend/src/trpc/routes/wsAppRouter.ts",
+        "apps/admin_backend/src/ws/",
+        "authorizationController",
+        "authorizationRouter"
       ]
     },
 
