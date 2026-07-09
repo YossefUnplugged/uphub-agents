@@ -1,0 +1,12 @@
+{
+  "id": "T4-fix-round",
+  "branch": "task-square",
+  "base": "lint-var",
+  "kind": "fix-round exercise (goal-based loop — Gate A red on pre-existing lint, the loop must repair it)",
+  "prompt": "Add a `square(a)` function to src/mathUtils.mjs that returns a*a, and export it. Add a test for it in test/mathUtils.test.mjs following the style of the existing tests. IMPORTANT: do NOT modify or refactor ANY existing code — only add the new function and its test.",
+  "hiddenTest": null,
+  "negativeControl": false,
+  "fixRounds": true,
+  "minRounds": 1,
+  "expect": "The implement phase adds square() but leaves the seeded `var` in double() (it was told not to touch existing code) -> Gate A RED on lint -> the WRAPPER-owned fix-round loop feeds the exact lint failure to a fix agent -> var becomes let/const -> full Gate A green. PASS requires gate green AND at least 1 fix round actually used (proves the loop ran, not a lucky first pass)."
+}

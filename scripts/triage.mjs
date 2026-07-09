@@ -14,22 +14,29 @@
  *      so without this the agent would run with NO skills/routing/hook — defeating containment)
  *   3. IMPLEMENT phase: claude -p, constrained allowlist (no gh / no push / no gate-run), implement+commit
  *   4. GATE A (this script): node scripts/validate.mjs --path <worktree> --base origin/main  ← authoritative
+ *   4b. GOAL-BASED FIX LOOP (ADR-007, scripts/lib/fix-loop.mjs): on RED, the exact failing checks are
+ *       fed to a FIX-phase agent (same constrained allowlist, cheaper model first) and the FULL gate
+ *       re-runs — capped at config/loops.json fixRounds.max, with no-progress + diff-growth guards.
+ *       tripwire/branch/gate-crash never loop (non-retryable). Exhaustion → state/blocked.json.
  *   5. GATE B + CLOSE phase: only if Gate A is green — a second claude -p with the close allowlist
  *      (gh draft PR + Jira write). Terminal state is a DRAFT PR; never a merge.
  *   6. teardown (unless --keep)
  *
  *   node scripts/triage.mjs --ticket UNP-1234
- *   node scripts/triage.mjs --ticket UNP-1234 --keep       # leave the worktree to inspect
- *   node scripts/triage.mjs --ticket TEST-1  --dry-run     # stub both agent phases; exercise the
- *                                                          # worktree/context/Gate-A/teardown spine only
+ *   node scripts/triage.mjs --ticket UNP-1234 --keep            # leave the worktree to inspect
+ *   node scripts/triage.mjs --ticket UNP-1234 --max-fix-rounds 0  # disable the fix loop for this run
+ *   node scripts/triage.mjs --ticket TEST-1  --dry-run          # stub agent phases; exercise the spine
+ *   node scripts/triage.mjs --ticket TEST-1  --dry-run --inject-red 1   # + exercise the fix loop
+ *                                                          # (N synthetic RED gates, then real)
  *
  * The live Jira/gh path can only be smoke-tested by the owner (real ai-ready ticket + auth + VPN).
  * --dry-run verifies everything that does NOT need the network.
  */
 import { execSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, cpSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, cpSync, rmSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fixLoop } from "./lib/fix-loop.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const VALIDATE = join(ROOT, "scripts", "validate.mjs");
@@ -43,6 +50,14 @@ const keep = argv.includes("--keep");
 const dryRun = argv.includes("--dry-run");
 const planApproved = argv.includes("--plan-approved");   // owner-confirmed the ticket's plan-approved label
 const maxTurns = getFlag("--max-turns") || "60";
+// --inject-red N (dry-run only): the first N Gate A runs return a SYNTHETIC lint failure, so the
+// fix-round loop's mechanics (classify → fix → re-gate → caps/guards) are testable fully offline.
+const injectRed = argv.includes("--inject-red") ? Number(getFlag("--inject-red")) || 1 : 0;
+
+// Loop caps + model routing — config, never prompts (ADR-007).
+const loopsCfg = JSON.parse(readFileSync(join(ROOT, "config", "loops.json"), "utf8"));
+const fixCfg = { ...loopsCfg.fixRounds };
+if (getFlag("--max-fix-rounds") !== null) fixCfg.max = Number(getFlag("--max-fix-rounds"));
 
 if (!ticket) { console.error("Usage: node scripts/triage.mjs --ticket <TICKET> [--keep] [--dry-run]"); process.exit(2); }
 
@@ -79,14 +94,16 @@ const CLOSE_TOOLS = [
     // NOTE: no `gh pr merge`, no `gh pr ready`, no push to protected refs — draft PR is the terminal state.
 ].join(",");
 
-function agent(promptText, allowedTools, label) {
-    console.log(`\n▶ ${label} phase (claude -p, cwd=worktree)`);
+function agent(promptText, allowedTools, label, opts = {}) {
+    console.log(`\n▶ ${label} phase (claude -p, cwd=worktree${opts.model ? `, model ${opts.model}` : ""})`);
     if (dryRun) {
         console.log("  [dry-run] skipping the claude call");
         return { skipped: true };
     }
+    const modelArg = opts.model ? ` --model ${opts.model}` : "";
+    const turns = opts.maxTurns || maxTurns;
     try {
-        execSync(`claude -p --permission-mode acceptEdits --allowedTools ${allowedTools} --max-turns ${maxTurns}`,
+        execSync(`claude -p --permission-mode acceptEdits --allowedTools ${allowedTools} --max-turns ${turns}${modelArg}`,
             { cwd: wt, input: promptText, encoding: "utf8", timeout: 900000, stdio: ["pipe", "pipe", "pipe"] });
         return { skipped: false };
     } catch (e) {
@@ -152,28 +169,107 @@ if (dryRun) {
 }
 
 // ── 4. GATE A — the wrapper runs it. Authoritative. The agent never graded itself. ─────────────────
-console.log(`\n▶ GATE A (wrapper runs validate.mjs — authoritative)`);
-let gate;
 // In dry-run the worktree has no node_modules, so skip the heavy nx checks and exercise the cheap,
 // worktree-correctness checks (branch/commit/imports/staged) that prove the spine wired up right.
 const gateSkip = dryRun ? " --skip lint,typecheck,test" : "";
 const gatePlan = planApproved ? " --plan-approved" : "";   // fail-closed: absent ⇒ security paths hard-block
-try {
-    gate = JSON.parse(sh(`node "${VALIDATE}" --target ${targetName} --path "${wt}" --base ${base}${gateSkip}${gatePlan} --json`, ROOT));
-} catch (e) {
-    try { gate = JSON.parse((e.stdout || "").toString()); }
-    catch { gate = { ok: false, results: [], error: ((e.stdout || "") + (e.stderr || e.message || "")).toString().slice(-500) }; }
+let gateRuns = 0;
+function runGateA() {
+    gateRuns++;
+    // --inject-red: synthetic RED for the first N runs (offline test of the loop mechanics).
+    if (dryRun && gateRuns <= injectRed) {
+        console.log(`  [inject-red] synthetic RED gate (${gateRuns}/${injectRed})`);
+        return {
+            ok: false, results: [
+                { name: "branch", status: "pass", detail: "synthetic" },
+                { name: "lint", status: "fail", detail: "synthetic lint failure injected by --inject-red:\n  src/example.ts:1:1  no-var  Unexpected var." },
+            ],
+        };
+    }
+    let g;
+    try {
+        g = JSON.parse(sh(`node "${VALIDATE}" --target ${targetName} --path "${wt}" --base ${base}${gateSkip}${gatePlan} --json`, ROOT));
+    } catch (e) {
+        try { g = JSON.parse((e.stdout || "").toString()); }
+        catch { g = { ok: false, results: [], error: ((e.stdout || "") + (e.stderr || e.message || "")).toString().slice(-500) }; }
+    }
+    const summary = (g.results || []).map(r => `${r.name}:${r.status}`).join(" ");
+    console.log(`  Gate A: ${g.ok ? "GREEN" : "RED"} · ${summary}`);
+    if (g.error) console.log(`  (gate error: ${g.error})`);
+    return g;
+}
+
+console.log(`\n▶ GATE A (wrapper runs validate.mjs — authoritative)`);
+let gate = runGateA();
+
+// ── 4b. GOAL-BASED FIX LOOP (ADR-007): RED → feed the exact failures to a constrained FIX agent →
+// full gate again. Cap + guards are wrapper-enforced; the agent never decides its own continuation.
+let blocked = null;
+let fixRoundsUsed = 0;
+if (!gate.ok) {
+    const loopRes = fixLoop({
+        initialGate: gate,
+        runGate: () => { console.log(`\n▶ GATE A (re-run after fix round)`); return runGateA(); },
+        runFixAgent: ({ prompt, model, maxTurns: turns, round }) => {
+            if (dryRun) {
+                // stub fix: a real commit so HEAD moves and the no-progress guard is exercised honestly
+                writeFileSync(join(wt, ".triage-dryrun.txt"), `dry-run fix round ${round}\n`);
+                sh("git add .triage-dryrun.txt", wt);
+                sh(`git -c user.email=triage@uphub.local -c user.name="uphub triage" commit -q -m "fix(dryrun): stub fix round ${round} (${ticket})"`, wt);
+                console.log(`\n▶ FIX round ${round}\n  [dry-run] made a stub fix commit instead of calling claude`);
+                return;
+            }
+            const res = agent(prompt, IMPLEMENT_TOOLS, `FIX round ${round}`, { model, maxTurns: turns });
+            if (res.error) console.log("  fix-phase agent error (tail):\n" + res.error);
+        },
+        git: (cmd) => (shSafe(`git ${cmd}`, wt) || "").trim(),
+        cfg: fixCfg, root: ROOT, ticket, branch, base,
+        log: (m) => console.log(m),
+    });
+    gate = loopRes.gate;
+    blocked = loopRes.blocked;
+    fixRoundsUsed = loopRes.rounds;
+    if (blocked) {
+        // Mechanical blocked-ledger (no model): the scheduler must never re-pick this ticket, even if
+        // the human hasn't labeled it ai-blocked yet. Jira labeling itself is wired in via lib/jira.mjs.
+        try {
+            mkdirSync(join(ROOT, "state"), { recursive: true });
+            const ledgerPath = join(ROOT, "state", "blocked.json");
+            const ledger = existsSync(ledgerPath) ? JSON.parse(readFileSync(ledgerPath, "utf8")) : {};
+            ledger[ticket] = {
+                reason: blocked, rounds: fixRoundsUsed, worktree: wt,
+                gate: (gate.results || []).filter(r => r.status === "fail").map(r => r.name),
+                at: new Date().toISOString(),
+            };
+            writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2) + "\n");
+            console.log(`  blocked-ledger updated: state/blocked.json`);
+        } catch (e) { console.log(`  (blocked-ledger write failed: ${e.message})`); }
+        // Mechanical ai-blocked labeling (ADR-008) — wrapper-computed text, no model. Best-effort:
+        // the local ledger above already guarantees the scheduler never re-picks this ticket.
+        try {
+            const jiraLib = await import("./lib/jira.mjs");
+            if (!dryRun && jiraLib.configured()) {
+                await jiraLib.addLabel(ticket, "ai-blocked");
+                await jiraLib.addComment(ticket,
+                    `uphub triage blocked mechanically: ${blocked}. ` +
+                    `Failing checks: ${(gate.results || []).filter(r => r.status === "fail").map(r => r.name).join(", ") || "(gate crash)"}. ` +
+                    `Fix rounds used: ${fixRoundsUsed}. Worktree kept for inspection on the owner's machine.`);
+                console.log("  Jira: ai-blocked label + summary comment added (mechanical, ADR-008)");
+            } else if (!dryRun) {
+                console.log("  (JIRA_API_TOKEN not configured — label the ticket ai-blocked manually; see ADR-008)");
+            }
+        } catch (e) { console.log(`  (Jira labeling failed: ${String(e.message).slice(0, 120)} — label manually)`); }
+    }
 }
 const gateSummary = (gate.results || []).map(r => `${r.name}:${r.status}`).join(" ");
-console.log(`  Gate A: ${gate.ok ? "GREEN" : "RED"} · ${gateSummary}`);
-if (gate.error) console.log(`  (gate error: ${gate.error})`);
 
 // ── 5. CLOSE phase — only if Gate A is green ────────────────────────────────────────────────────
 let outcome;
 if (!gate.ok) {
-    outcome = "TRIAGE-BLOCKED: gate-a";
+    outcome = `TRIAGE-BLOCKED: gate-a${blocked ? ` (${blocked})` : ""}${fixRoundsUsed ? ` after ${fixRoundsUsed} fix round(s)` : ""}`;
     console.log(`\n✗ ${outcome} — worktree kept for inspection; no PR, no Jira change.`);
 } else {
+    if (fixRoundsUsed) console.log(`\n  (Gate A reached green after ${fixRoundsUsed} fix round(s))`);
     const closePrompt =
         `Agent-system root: ${ROOT}\nBranch "${branch}", ticket ${ticket}. Gate A ALREADY PASSED (the wrapper ran it: ${gateSummary}). ` +
         `This is the GATE-B + CLOSE phase. Do sections 6, 6c, and 7 of the protocol below: a fresh-context ` +

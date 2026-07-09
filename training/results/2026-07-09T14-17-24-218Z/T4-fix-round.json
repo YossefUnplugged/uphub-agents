@@ -1,0 +1,54 @@
+{
+  "task": "T4-fix-round",
+  "kind": "fix-round exercise (goal-based loop — Gate A red on pre-existing lint, the loop must repair it)",
+  "passed": true,
+  "gateOk": true,
+  "negativeControl": false,
+  "negControlSatisfied": true,
+  "fixRounds": 2,
+  "fixBlocked": null,
+  "minRounds": 1,
+  "srcFilesChanged": [
+    "src/mathUtils.mjs"
+  ],
+  "gate": [
+    {
+      "name": "branch",
+      "status": "pass",
+      "detail": "branch \"task-square\" matches ^task-[a-z0-9-]+$"
+    },
+    {
+      "name": "commit",
+      "status": "pass",
+      "detail": "conventional subject + ticket ref present (\"fix(t4-fix-round): address Gate A failures (task-square)\")"
+    },
+    {
+      "name": "imports:no-fs-in-src",
+      "status": "pass",
+      "detail": "src/ must stay pure — no filesystem imports (a deliberate trap so a task can exercise the forbidden-import gate). (changed files)"
+    },
+    {
+      "name": "staged",
+      "status": "pass",
+      "detail": "no agent-context files staged or committed"
+    },
+    {
+      "name": "lint",
+      "status": "pass",
+      "detail": "node tools/lint.mjs"
+    },
+    {
+      "name": "typecheck",
+      "status": "pass",
+      "detail": "node tools/typecheck.mjs"
+    },
+    {
+      "name": "test",
+      "status": "pass",
+      "detail": "node --test"
+    }
+  ],
+  "gateError": null,
+  "agentDurationMs": 105284,
+  "agentError": null
+}

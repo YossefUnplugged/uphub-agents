@@ -28,6 +28,7 @@ for T1), so a feature/negative-control task isn't dragged red by an unrelated pr
 | **T1-fix-subtract** | bug fix (smoke) | the agent MUST fix an obvious bug so the existing tests pass — if T1 fails, the route is broken |
 | **T2-add-multiply** | feature | implement + export `multiply`; scored by a **hidden** acceptance test the agent never sees (no gaming with a weak self-test) |
 | **T3-negative-control** | nothing to do | `add` is already correct — PASS requires the agent to make **no** src change (catches "invents work when there is none") |
+| **T4-fix-round** | goal-based loop | branches off `lint-var` (a seeded `var` the implement phase is told not to touch) → Gate A RED on lint → the **wrapper-owned fix-round loop** (ADR-007, `scripts/lib/fix-loop.mjs`) must repair it. PASS = gate green **and** ≥1 fix round actually used |
 
 ## Run it
 ```bash
@@ -37,7 +38,13 @@ node training/run-training.mjs --all                    # every task
 node training/run-training.mjs --task T2-add-multiply --keep   # keep the worktree to inspect
 ```
 Each run writes a ledger to `training/results/<timestamp>/<task>.json` (+ `.diff`) with the Gate A
-detail, the agent's diff, duration, and PASS/FAIL — the audit trail the benchmark was missing.
+detail, the agent's diff, duration, fix-rounds used, and PASS/FAIL — the audit trail the benchmark was missing.
+
+**Trend / regression:** add `--ledger` to append one JSONL line to `training/results/trend.jsonl`; a task
+going green→red vs the previous line prints a REGRESSION warning and writes `state/ALERT-training-regression.txt`.
+Run `node training/run-training.mjs --all --ledger` **before committing changes to the agent system itself**
+(prompts/gates/skills) — this deliberately replaces a nightly schedule: the suite's result only changes when
+we change the system, so a nightly run would measure a constant (see `docs/architecture/12 Loops.md`).
 
 ## Add a task
 Drop a JSON in `training/tasks/` (`id`, `branch` matching `^task-[a-z0-9-]+$`, `prompt`, optional

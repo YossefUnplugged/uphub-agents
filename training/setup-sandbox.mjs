@@ -43,7 +43,19 @@ sh("git add src/mathUtils.mjs", SANDBOX);
 sh('git commit -m "chore: seed subtract bug for task T1 (do not fix on main)"', SANDBOX);
 sh("git checkout main", SANDBOX);
 
+// Base branch for T4 (fix-round exercise): a committed LINT violation (var) in a helper the task's
+// implement phase is told not to touch — so Gate A goes RED on lint and the FIX-ROUND LOOP must
+// repair it. Tests stay green here; only lint is red.
+sh("git checkout -b lint-var", SANDBOX);
+writeFileSync(mathPath, readFileSync(mathPath, "utf8") +
+    "\n// Helper with a deliberate lint violation (var) — T4's fix-round bait.\n" +
+    "export function double(a) {\n    var result = a * 2;\n    return result;\n}\n");
+sh("git add src/mathUtils.mjs", SANDBOX);
+sh('git commit -m "chore: seed lint violation for task T4 (var in double; do not fix on main)"', SANDBOX);
+sh("git checkout main", SANDBOX);
+
 console.log(`✓ sandbox ready at ${SANDBOX}`);
 console.log("  main         — clean baseline, `node --test` GREEN (base for T2 feature + T3 negative-control)");
 console.log("  bug-subtract — subtract broken, `node --test` RED (base for T1 bug-fix)");
+console.log("  lint-var     — lint RED (var in double), tests green (base for T4 fix-round exercise)");
 console.log("  next: node training/run-training.mjs --all");
