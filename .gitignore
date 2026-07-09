@@ -24,3 +24,6 @@ nul
 
 # loop-control ledgers (daily caps, blocked tickets, alerts, pause kill-switch)
 state/
+
+# local credentials (ADR-008) — only .env.example is tracked
+.env

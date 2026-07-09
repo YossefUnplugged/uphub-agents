@@ -6,11 +6,15 @@
 #   pwsh -File scripts/install-scheduler.ps1 -Uninstall      # remove
 param(
     [int]$IntervalMinutes = 30,
-    [switch]$Uninstall
+    [switch]$Uninstall,
+    # The UNATTENDED GATE (docs/architecture/12 Loops.md): live smoke test + ~5 attended tick runs
+    # green + pilot dailyTicketCap of 1. Passing this switch is the owner's explicit statement that
+    # the gate has been met — without it, registration refuses.
+    [switch]$AcknowledgeUnattendedGate
 )
 
-if (-not $Uninstall) {
-    Write-Error "DISARMED: the scheduled path is being rebuilt around triage-tick.mjs (the old poll model is gone; triage-loop.ps1 is orphaned). Do not register until the unattended gate passes - see docs/architecture/12 Loops.md. (-Uninstall still works.)"
+if (-not $Uninstall -and -not $AcknowledgeUnattendedGate) {
+    Write-Error "GATED: registering the schedule requires -AcknowledgeUnattendedGate (the unattended gate in docs/architecture/12 Loops.md: live smoke test + ~5 attended tick runs + pilot cap 1). (-Uninstall still works.)"
     exit 1
 }
 
@@ -37,15 +41,16 @@ $Trigger.Repetition = (New-ScheduledTaskTrigger -Once -At 7am `
     -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes) `
     -RepetitionDuration (New-TimeSpan -Hours 11)).Repetition
 
+# 2h: implement + up to 2 fix rounds x a full nx gate + close can exceed the old 1h limit.
 $Settings = New-ScheduledTaskSettingsSet `
     -WakeToRun `
     -StartWhenAvailable `
     -DontStopOnIdleEnd `
     -MultipleInstances IgnoreNew `
-    -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+    -ExecutionTimeLimit (New-TimeSpan -Hours 2)
 
 Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
-    -Settings $Settings -Description "Unplugged autonomous triage (local-only). Picks ai-ready UNP tickets → draft PR. Human reviews + merges." `
+    -Settings $Settings -Description "Unplugged autonomous triage tick (local-only, ADR-007). Mechanical poll of ai-ready UNP tickets -> triage.mjs -> draft PR. Human reviews + merges. Pause: create state/pause." `
     -RunLevel Limited -Force
 
 Write-Host "Installed '$TaskName' — every $IntervalMinutes min, 7am–6pm, wake-to-run." -ForegroundColor Green
