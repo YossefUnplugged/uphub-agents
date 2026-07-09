@@ -21,3 +21,6 @@ nul
 
 # production triage worktrees (isolated per-ticket checkouts)
 .triage-worktrees/
+
+# loop-control ledgers (daily caps, blocked tickets, alerts, pause kill-switch)
+state/

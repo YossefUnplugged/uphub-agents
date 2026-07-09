@@ -9,6 +9,11 @@ param(
     [switch]$Uninstall
 )
 
+if (-not $Uninstall) {
+    Write-Error "DISARMED: the scheduled path is being rebuilt around triage-tick.mjs (the old poll model is gone; triage-loop.ps1 is orphaned). Do not register until the unattended gate passes - see docs/architecture/12 Loops.md. (-Uninstall still works.)"
+    exit 1
+}
+
 $TaskName = "UnpluggedAgentTriage"
 $AgentRoot = Split-Path -Parent $PSScriptRoot
 $Loop = Join-Path $PSScriptRoot "triage-loop.ps1"

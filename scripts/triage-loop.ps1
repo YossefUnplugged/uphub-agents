@@ -6,6 +6,8 @@
 param(
     [string]$Target = "admin"
 )
+Write-Error "ORPHANED: this script predates the triage.mjs orchestrator (it calls run-headless.ps1 without the now-mandatory -Ticket, and the poll model moved to triage-tick.mjs). Being rebuilt - see docs/architecture/12 Loops.md."
+exit 1
 
 $AgentRoot = Split-Path -Parent $PSScriptRoot
 $LockFile  = Join-Path $env:TEMP "unplugged-agent-triage.lock"

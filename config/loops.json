@@ -1,0 +1,28 @@
+{
+  "_comment": "All loop caps and routing live HERE, never in prompts (ADR-007). The agent cannot raise a cap that is an integer enforced by the wrapper. See docs/architecture/12 Loops.md for the stop-condition inventory.",
+
+  "fixRounds": {
+    "_comment": "Goal-based loop in triage.mjs: IMPLEMENT -> Gate A -> (RED -> FIX -> full Gate A) x max. models[i] = model for fix round i+1; 'inherit' = same model as the implement phase (escalation ladder). Cheap = lint/commit/staged/imports failures; deep = typecheck/test.",
+    "max": 2,
+    "models": ["sonnet", "inherit"],
+    "maxTurnsCheap": 15,
+    "maxTurnsDeep": 30,
+    "diffGrowth": {
+      "_comment": "Runaway-rewrite guard: a fix round growing the diff by more than this vs before the round is BLOCKED, not re-gated.",
+      "maxNewFiles": 5,
+      "maxInsertionFactor": 2
+    }
+  },
+
+  "poll": {
+    "_comment": "Time-based loop (triage-tick.mjs). intervalMinutes is documentation - the real interval is the Task Scheduler registration. dailyTicketCap: start the pilot at 1, raise on trust.",
+    "intervalMinutes": 30,
+    "dailyTicketCap": 3
+  },
+
+  "prFeedback": {
+    "_comment": "Reserved for the DEFERRED PR-feedback loop (12 Loops.md). Not consumed by any script yet.",
+    "maxRoundsPerPr": 3,
+    "model": "sonnet"
+  }
+}
