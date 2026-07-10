@@ -21,8 +21,9 @@
         "commitSubjectPattern": "^(feat|fix|test|docs|chore|refactor|perf|style|build|ci)\\([\\w-]+\\): .+",
         "commitTicketPattern": "UNP-\\d+"
       },
+      "_checks_note": "lint is DIFF-SCOPED (scripts/lint-changed.mjs): judge the change, not ~25k pre-existing violations from years of lint never running (fixed 2026-07-10: eslintrc.json was missing its leading dot and all plugins were missing). The team's full-repo debt burn-down is a separate human decision (npx nx run-many -t lint).",
       "checks": {
-        "lint": "npx nx affected -t lint --base=${base}",
+        "lint": "node C:/Users/YossefBenHaim/Desktop/unplugged-agent-system/scripts/lint-changed.mjs --base ${base}",
         "typecheck": "npx nx run admin_backend:typecheck:remote && npx tsc -b ./apps/admin_client/tsconfig.json && npx nx run admin-types:typecheck:remote",
         "test": "npx nx affected -t test --base=${base} --passWithNoTests"
       },
