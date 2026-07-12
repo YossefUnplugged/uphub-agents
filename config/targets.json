@@ -22,6 +22,12 @@
         "commitTicketPattern": "UNP-\\d+"
       },
       "_checks_note": "lint is DIFF-SCOPED (scripts/lint-changed.mjs): judge the change, not ~25k pre-existing violations from years of lint never running (fixed 2026-07-10: eslintrc.json was missing its leading dot and all plugins were missing). The team's full-repo debt burn-down is a separate human decision (npx nx run-many -t lint).",
+      "_worktreeOverlay_note": "Uncommitted LOCAL infra fixes the checks depend on (kept out of git for now as the agent's gates). triage.mjs copies these from the checkout into each fresh worktree so Gate A + self-verify run against the fixed setup, not origin/main's broken one.",
+      "worktreeOverlay": [
+        ".eslintrc.json",
+        "apps/admin_client/tsconfig.node.json",
+        "libs/admin-types/vitest.config.ts"
+      ],
       "checks": {
         "lint": "node C:/Users/YossefBenHaim/Desktop/unplugged-agent-system/scripts/lint-changed.mjs --base ${base}",
         "typecheck": "npx nx run admin_backend:typecheck:remote && npx tsc -b ./apps/admin_client/tsconfig.json && npx nx run admin-types:typecheck:remote",

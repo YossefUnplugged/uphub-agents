@@ -161,6 +161,15 @@ if (existsSync(srcClaude)) {
 // EPHEMERAL: removed in teardown ALWAYS, even with --keep, because a junction is a footgun (git
 // worktree remove / rm -rf DESCEND THROUGH it and delete the REAL node_modules). The kept worktree is
 // left as pure source; to run it, copy it into the real checkout or install there.
+// Overlay uncommitted local infra fixes (eslint config, tsconfig tweaks) the checks depend on — the
+// worktree is off origin/main, which predates them. Kept out of git for now (the owner's decision), so
+// they must be stamped in per-run or Gate A/self-verify runs against the broken baseline.
+for (const rel of target.worktreeOverlay || []) {
+    const src = join(REPO, rel);
+    if (!dryRun && existsSync(src)) { mkdirSync(dirname(join(wt, rel)), { recursive: true }); cpSync(src, join(wt, rel)); }
+}
+if (!dryRun && (target.worktreeOverlay || []).length) console.log(`  overlaid ${target.worktreeOverlay.length} local infra file(s) into the worktree`);
+
 const wtNodeModules = join(wt, "node_modules");
 let junctionMade = false;
 function linkNodeModules() {

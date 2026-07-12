@@ -52,9 +52,9 @@ believe a full listing is required, STOP and flag it — never fabricate one.
 
 ---
 
-## 2. WHAT EXISTS TO REVIVE (branch `UNP-8096`) — and what's wrong
+## 2. WHAT EXISTS TO REVIVE (branch `origin/UNP-8096`) — and what's wrong
 
-Recoverable from the `UNP-8096` branch history; reuse the good parts, fix these:
+Recoverable from the `origin/UNP-8096` branch history; reuse the good parts, fix these:
 - `couponController.ts` — `countCoupons` → `available-count` ✅ keep. `createCoupons` conflates the two POSTs
   ❌ split into `createList` (`/promotion-code?number=N`) and `createCsv` (`/promotion-code/file?number=N`,
   CSV). `listCoupons` → `/inner/report/promotion-code` ❌ **fictional — remove**. **Add** the newly-available
