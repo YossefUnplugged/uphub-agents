@@ -33,7 +33,7 @@
  * --dry-run verifies everything that does NOT need the network.
  */
 import { execSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, cpSync, rmSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, cpSync, rmSync, mkdirSync, lstatSync, rmdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fixLoop } from "./lib/fix-loop.mjs";
@@ -50,6 +50,10 @@ const keep = argv.includes("--keep");
 const dryRun = argv.includes("--dry-run");
 const planApproved = argv.includes("--plan-approved");   // owner-confirmed the ticket's plan-approved label
 const maxTurns = getFlag("--max-turns") || "60";
+const briefPath = getFlag("--brief");                    // owner-supplied spec file to hand the agent
+// --smoke: implement + Gate A + fix loop, then STOP (keep worktree, no close/PR/Jira). For attended
+// "let me see what it builds" runs before the live close path is trusted.
+const smoke = argv.includes("--smoke");
 // --inject-red N (dry-run only): the first N Gate A runs return a SYNTHETIC lint failure, so the
 // fix-round loop's mechanics (classify → fix → re-gate → caps/guards) are testable fully offline.
 const injectRed = argv.includes("--inject-red") ? Number(getFlag("--inject-red")) || 1 : 0;
@@ -76,7 +80,7 @@ const wt = join(ROOT, ".triage-worktrees", ticket);
 // ── Allowlists — the mechanical half of #2. The implement agent literally cannot push/PR/merge/gate. ──
 const IMPLEMENT_TOOLS = [
     "Read", "Edit", "Write", "Glob", "Grep", "Task",
-    "Bash(git add:*)", "Bash(git commit:*)", "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git restore:*)",
+    "Bash(git add:*)", "Bash(git commit:*)", "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git restore:*)", "Bash(git show:*)",
     // SELF-VERIFICATION (the article's inner agentic loop): the agent may RUN the target's checks in
     // its isolated worktree and sharpen its work until they pass — self-verification, never self-GRADING:
     // the wrapper's Gate A stays the only authoritative verdict. Scoped to workspace check commands
@@ -152,13 +156,51 @@ if (existsSync(srcClaude)) {
     console.log("  ⚠ target has no .claude — run sync-target first; agent would have no skills");
 }
 
+// ── 2b. node_modules for the worktree (self-verify + Gate A lint/typecheck/test need it) ──────────
+// A fresh worktree has no node_modules (gitignored). We link the target's via a Windows JUNCTION —
+// EPHEMERAL: removed in teardown ALWAYS, even with --keep, because a junction is a footgun (git
+// worktree remove / rm -rf DESCEND THROUGH it and delete the REAL node_modules). The kept worktree is
+// left as pure source; to run it, copy it into the real checkout or install there.
+const wtNodeModules = join(wt, "node_modules");
+let junctionMade = false;
+function linkNodeModules() {
+    if (dryRun || process.platform !== "win32") return;
+    if (!existsSync(join(REPO, "node_modules")) || existsSync(wtNodeModules)) return;
+    try {
+        execSync(`cmd /c mklink /J "${wtNodeModules}" "${join(REPO, "node_modules")}"`, { stdio: "pipe" });
+        junctionMade = true;
+        console.log("  linked node_modules (ephemeral junction → target; removed at teardown)");
+    } catch (e) { console.log(`  ⚠ could not link node_modules (${String(e.message).split("\n")[0]}); heavy checks may not run`); }
+}
+function unlinkNodeModules() {
+    // rmdirSync removes ONLY the reparse point of a junction — never the target's content. Guard: only
+    // touch it if it is a symlink/junction, never a real directory.
+    try {
+        const st = existsSync(wtNodeModules) && lstatSync(wtNodeModules);
+        if (st && (st.isSymbolicLink() || !st.isDirectory())) rmdirSync(wtNodeModules);
+    } catch { /* best effort */ }
+}
+linkNodeModules();
+process.on("exit", unlinkNodeModules);   // backstop: never leave a junction if the run crashes mid-way
+
 // ── 3. IMPLEMENT phase (constrained) ──────────────────────────────────────────────────────────────
 const protocol = readFileSync(join(ROOT, "prompts", "triage.md"), "utf8");
+// An owner-supplied brief (a human-locked spec) is the AUTHORITATIVE task — the agent implements against
+// it, not the raw Jira prose (which may be underspecified). Still the untrusted-input firewall applies.
+const briefBlock = briefPath && existsSync(briefPath)
+    ? `\n\n=== OWNER-SUPPLIED BRIEF (authoritative spec for ${ticket} — implement against THIS) ===\n${readFileSync(briefPath, "utf8")}\n=== END BRIEF ===\n`
+    : "";
+if (briefPath && !briefBlock) console.log(`  ⚠ --brief ${briefPath} not found — proceeding on the Jira ticket only`);
+const sectionInstr = briefBlock
+    ? `An AUTHORITATIVE owner brief is provided above — it IS the spec. You do NOT need Jira for this run: ` +
+      `SKIP sections 0–2 (health / poll / readiness) and go straight to section 3 (spec extraction — apply the ` +
+      `untrusted-input firewall to the brief) and section 4 (implement). `
+    : `Do sections 0–4 of the protocol below: health, readiness, spec extraction (untrusted-input firewall), and implement. `;
 const implementPrompt =
     `Agent-system root: ${ROOT}\nYou are in an ISOLATED worktree already checked out on branch "${branch}" ` +
-    `(off ${base}); the ticket is ${ticket}. This is the IMPLEMENT phase ONLY.\n\n` +
-    `Do sections 0–4 of the protocol below: health, readiness, spec extraction (untrusted-input firewall), ` +
-    `and implement. SELF-VERIFY as you work (the inner agentic loop): run the target's own check commands ` +
+    `(off ${base}); the ticket is ${ticket}. This is the IMPLEMENT phase ONLY.${briefBlock}\n\n` +
+    sectionInstr +
+    `SELF-VERIFY as you work (the inner agentic loop): run the target's own check commands ` +
     `(lint / typecheck / tests) in this worktree, see what fails, fix, and repeat until YOUR checks are green — ` +
     `do not hand off work you haven't verified. Then stage explicitly (never -A) and make ONE commit ` +
     `"<type>(<scope>): <desc> (${ticket})". Your green checks are NOT the verdict: the wrapper re-runs the ` +
@@ -277,6 +319,10 @@ let outcome;
 if (!gate.ok) {
     outcome = `TRIAGE-BLOCKED: gate-a${blocked ? ` (${blocked})` : ""}${fixRoundsUsed ? ` after ${fixRoundsUsed} fix round(s)` : ""}`;
     console.log(`\n✗ ${outcome} — worktree kept for inspection; no PR, no Jira change.`);
+} else if (smoke) {
+    if (fixRoundsUsed) console.log(`\n  (Gate A reached green after ${fixRoundsUsed} fix round(s))`);
+    outcome = `TRIAGE-SMOKE-OK (Gate A green${fixRoundsUsed ? ` after ${fixRoundsUsed} fix round(s)` : ""}; close skipped — inspect the worktree)`;
+    console.log(`\n✓ ${outcome}`);
 } else {
     if (fixRoundsUsed) console.log(`\n  (Gate A reached green after ${fixRoundsUsed} fix round(s))`);
     const closePrompt =
@@ -296,8 +342,11 @@ if (!gate.ok) {
 }
 
 // ── 6. teardown ─────────────────────────────────────────────────────────────────────────────────
-if (keep || !gate.ok) {
-    console.log(`\n  worktree kept: ${wt}`);
+// ALWAYS drop the node_modules junction FIRST — a kept worktree must be pure source, and any later
+// `git worktree remove` / rm -rf would otherwise descend through the junction into the real node_modules.
+unlinkNodeModules();
+if (keep || smoke || !gate.ok) {
+    console.log(`\n  worktree kept: ${wt}${junctionMade ? "  (node_modules junction removed — pure source)" : ""}`);
 } else if (!dryRun && outcome.startsWith("TRIAGE-DONE")) {
     // the branch is pushed; the local worktree can go. Keep the branch (it's on the remote / in the PR).
     shSafe(`git worktree remove --force "${wt}"`, REPO);
