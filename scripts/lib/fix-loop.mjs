@@ -88,8 +88,12 @@ export function fixLoop({ initialGate, runGate, runFixAgent, git, cfg, root, tic
         }
         const statAfter = parseShortstat(git(`diff --shortstat ${base}...HEAD`));
         const g = cfg.diffGrowth || {};
-        if (statAfter.files > statBefore.files + (g.maxNewFiles ?? 5) ||
-            (statBefore.insertions > 0 && statAfter.insertions > statBefore.insertions * (g.maxInsertionFactor ?? 2))) {
+        // Only guard against runaway GROWTH when there was a real baseline to grow from. If nothing was
+        // committed before this round (statBefore.files === 0 — e.g. the implement phase timed out before
+        // committing), the fix round is legitimately committing the built work, NOT rewriting it.
+        if (statBefore.files > 0 && (
+            statAfter.files > statBefore.files + (g.maxNewFiles ?? 5) ||
+            statAfter.insertions > statBefore.insertions * (g.maxInsertionFactor ?? 2))) {
             return {
                 gate, rounds,
                 blocked: `runaway rewrite (files ${statBefore.files}→${statAfter.files}, insertions ${statBefore.insertions}→${statAfter.insertions})`,

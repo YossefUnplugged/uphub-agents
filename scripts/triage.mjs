@@ -54,6 +54,10 @@ const briefPath = getFlag("--brief");                    // owner-supplied spec 
 // --smoke: implement + Gate A + fix loop, then STOP (keep worktree, no close/PR/Jira). For attended
 // "let me see what it builds" runs before the live close path is trusted.
 const smoke = argv.includes("--smoke");
+// --continue: reuse an EXISTING worktree that already has committed work (e.g. a run blocked by an
+// orchestrator bug) — skip setup + implement, go straight to Gate A + fix loop + close. Resume, don't rebuild.
+const continueMode = argv.includes("--continue");
+const agentTimeoutMs = 1500000;   // 25 min per phase (build + slow nx self-verify needs headroom)
 // --inject-red N (dry-run only): the first N Gate A runs return a SYNTHETIC lint failure, so the
 // fix-round loop's mechanics (classify → fix → re-gate → caps/guards) are testable fully offline.
 const injectRed = argv.includes("--inject-red") ? Number(getFlag("--inject-red")) || 1 : 0;
@@ -86,7 +90,7 @@ const IMPLEMENT_TOOLS = [
     // the wrapper's Gate A stays the only authoritative verdict. Scoped to workspace check commands
     // (nx targets / tsc / npm scripts / node tests) — NOT a general Bash(node *) shell (exfil surface);
     // the worktree also carries no .env (gitignored → never copied).
-    "Bash(npx nx *)", "Bash(npx tsc *)", "Bash(npm test:*)", "Bash(npm run *)", "Bash(node --test*)", "Bash(node tools/*)",
+    "Bash(npx nx *)", "Bash(npx tsc *)", "Bash(npx eslint *)", "Bash(npm test:*)", "Bash(npm run *)", "Bash(node --test*)", "Bash(node tools/*)",
     // read-only Jira + browser (fetch a real API contract) + AAA sync — needed to implement, not to close
     "mcp__atlassian__atlassianUserInfo", "mcp__atlassian__searchJiraIssuesUsingJql", "mcp__atlassian__getJiraIssue",
     "mcp__claude-in-chrome__tabs_context_mcp", "mcp__claude-in-chrome__tabs_create_mcp", "mcp__claude-in-chrome__navigate",
@@ -127,7 +131,7 @@ function agent(promptText, allowedTools, label, opts = {}) {
     const turns = opts.maxTurns || maxTurns;
     try {
         execSync(`claude -p --permission-mode acceptEdits --max-turns ${turns}${modelArg}`,
-            { cwd: wt, input: promptText, encoding: "utf8", timeout: 900000, stdio: ["pipe", "pipe", "pipe"] });
+            { cwd: wt, input: promptText, encoding: "utf8", timeout: agentTimeoutMs, stdio: ["pipe", "pipe", "pipe"] });
         return { skipped: false };
     } catch (e) {
         return { skipped: false, error: ((e.stdout || "") + (e.stderr || e.message || "")).toString().slice(-800) };
@@ -135,11 +139,11 @@ function agent(promptText, allowedTools, label, opts = {}) {
 }
 
 // ── 1. isolated worktree off origin/main (never the dev's checkout) ──────────────────────────────
-console.log(`\ntriage → ${targetName}  ·  ticket ${ticket}  ·  base ${base}${dryRun ? "  (DRY RUN)" : ""}`);
+console.log(`\ntriage → ${targetName}  ·  ticket ${ticket}  ·  base ${base}${dryRun ? "  (DRY RUN)" : ""}${continueMode ? "  (CONTINUE)" : ""}`);
 // A real run branches off freshly-fetched origin/main; a dry-run (no network) branches off local HEAD.
-const doFetch = !dryRun || argv.includes("--fetch");
+const doFetch = !dryRun && !continueMode || argv.includes("--fetch");
 if (doFetch) shSafe("git fetch origin", REPO);
-const startPoint = doFetch ? base : "HEAD";
+const startPoint = (!dryRun && !continueMode) ? base : "HEAD";
 // Bulletproof pre-clean: a prior kept/blocked/crashed run may have left the worktree registration,
 // the on-disk directory, AND the branch behind — clear all three.
 function cleanWorktree() {
@@ -148,15 +152,23 @@ function cleanWorktree() {
     if (existsSync(wt)) rmSync(wt, { recursive: true, force: true });   // leftover dir from a crash
     shSafe(`git branch -D ${branch}`, REPO);
 }
-cleanWorktree();
-try {
-    sh(`git worktree add "${wt}" -b ${branch} ${startPoint}`, REPO);
-} catch (e) {
-    console.log(`  worktree off ${startPoint} failed (${e.message.split("\n").pop().slice(0, 80)}); cleaning + retrying off HEAD`);
+if (continueMode) {
+    // Resume an existing worktree with committed work — do NOT wipe it.
+    if (!existsSync(join(wt, ".git"))) { console.error(`--continue: no worktree at ${wt}`); process.exit(2); }
+    const head = shSafe(`git log --oneline ${base}...HEAD`, wt);
+    if (!head) { console.error(`--continue: worktree has no commits vs ${base} — nothing to resume`); process.exit(2); }
+    console.log(`  resuming worktree: ${wt}\n  committed so far:\n${head.split("\n").map(l => "    " + l).join("\n")}`);
+} else {
     cleanWorktree();
-    sh(`git worktree add "${wt}" -b ${branch} HEAD`, REPO);
+    try {
+        sh(`git worktree add "${wt}" -b ${branch} ${startPoint}`, REPO);
+    } catch (e) {
+        console.log(`  worktree off ${startPoint} failed (${e.message.split("\n").pop().slice(0, 80)}); cleaning + retrying off HEAD`);
+        cleanWorktree();
+        sh(`git worktree add "${wt}" -b ${branch} HEAD`, REPO);
+    }
+    console.log(`  worktree: ${wt}  (off ${startPoint})`);
 }
-console.log(`  worktree: ${wt}  (off ${startPoint})`);
 
 // ── 2. copy .claude context into the worktree (gitignored → absent from a fresh worktree) ─────────
 const srcClaude = join(REPO, ".claude");
@@ -231,7 +243,9 @@ const implementPrompt =
     `When your commit is made, STOP.\n\n---\n${protocol}`;
 
 let implResult = { skipped: true };
-if (dryRun) {
+if (continueMode) {
+    console.log("\n▶ IMPLEMENT phase\n  [continue] skipped — resuming the already-committed work; Gate A + fix loop take over");
+} else if (dryRun) {
     // stub: a minimal, gate-passing commit so the spine (Gate A on the worktree) is exercised for real
     writeFileSync(join(wt, ".triage-dryrun.txt"), "dry-run implement stub\n");
     sh("git add .triage-dryrun.txt", wt);
