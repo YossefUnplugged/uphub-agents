@@ -93,7 +93,7 @@ const IMPLEMENT_TOOLS = [
     "mcp__claude-in-chrome__get_page_text", "mcp__claude-in-chrome__read_page", "mcp__claude-in-chrome__read_network_requests",
     "mcp__up-aaa-sync__scan_routes", "mcp__up-aaa-sync__list_service_types", "mcp__up-aaa-sync__list_policies",
     // NOTE: deliberately absent — Bash(gh *), Bash(git push*), Bash(git checkout*), general Bash(node *)/shell, Atlassian writes.
-].join(",");
+];
 const CLOSE_TOOLS = [
     "Read", "Glob", "Grep",
     "Bash(git push:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git status:*)",
@@ -102,7 +102,19 @@ const CLOSE_TOOLS = [
     "mcp__atlassian__transitionJiraIssue", "mcp__atlassian__addCommentToJiraIssue",
     "mcp__up-aaa-sync__sync_actions", "mcp__up-aaa-sync__add_policy", "mcp__up-aaa-sync__assign_action_to_policy",
     // NOTE: no `gh pr merge`, no `gh pr ready`, no push to protected refs — draft PR is the terminal state.
-].join(",");
+];
+
+// Apply a phase's allowlist by writing it into the worktree's settings.local.json (JSON — avoids the
+// shell word-splitting that `--allowedTools` hits on entries containing spaces like "Bash(npx nx *)").
+// The copied deny list (destructive-command guards) is preserved; only the allow list is set per phase.
+function applyAllowlist(allow) {
+    const p = join(wt, ".claude", "settings.local.json");
+    let s = {};
+    try { s = JSON.parse(readFileSync(p, "utf8")); } catch { /* nothing copied */ }
+    s.permissions = { ...(s.permissions || {}), allow };
+    mkdirSync(dirname(p), { recursive: true });
+    writeFileSync(p, JSON.stringify(s, null, 2));
+}
 
 function agent(promptText, allowedTools, label, opts = {}) {
     console.log(`\n▶ ${label} phase (claude -p, cwd=worktree${opts.model ? `, model ${opts.model}` : ""})`);
@@ -110,10 +122,11 @@ function agent(promptText, allowedTools, label, opts = {}) {
         console.log("  [dry-run] skipping the claude call");
         return { skipped: true };
     }
+    applyAllowlist(allowedTools);   // per-phase containment via settings, not a shell flag
     const modelArg = opts.model ? ` --model ${opts.model}` : "";
     const turns = opts.maxTurns || maxTurns;
     try {
-        execSync(`claude -p --permission-mode acceptEdits --allowedTools ${allowedTools} --max-turns ${turns}${modelArg}`,
+        execSync(`claude -p --permission-mode acceptEdits --max-turns ${turns}${modelArg}`,
             { cwd: wt, input: promptText, encoding: "utf8", timeout: 900000, stdio: ["pipe", "pipe", "pipe"] });
         return { skipped: false };
     } catch (e) {
@@ -191,6 +204,7 @@ function unlinkNodeModules() {
 }
 linkNodeModules();
 process.on("exit", unlinkNodeModules);   // backstop: never leave a junction if the run crashes mid-way
+for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { unlinkNodeModules(); process.exit(1); });   // timeout-kill safety
 
 // ── 3. IMPLEMENT phase (constrained) ──────────────────────────────────────────────────────────────
 const protocol = readFileSync(join(ROOT, "prompts", "triage.md"), "utf8");
